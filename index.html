@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KidCode Games</title>
+  <meta name="description" content="Play simple, one‑page HTML games made by KidCode." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%230a84ff'/%3E%3Ctext x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='70' fill='white'%3EK%3C/text%3E%3Ctext x='54%' y='78%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='36' fill='white' opacity='.9'%3EG%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #0b1220;         /* dark background */
+      --panel: #101a2c;      /* card background */
+      --text: #e6ebf3;       /* main text */
+      --muted: #9fb1d1;      /* muted text */
+      --brand: #0a84ff;      /* accent */
+      --ring: rgba(10,132,255,.35);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0b1220 0%, #0d1627 100%);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing: .2px;
+    }
+    header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(10px);
+      background: color-mix(in oklab, #0b1220 85%, transparent);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 18px 20px; }
+    .brand {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .logo {
+      width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+      background: radial-gradient(60% 60% at 30% 30%, #3aa6ff 0%, #0a84ff 60%, #0063d1 100%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.15), 0 4px 20px rgba(10,132,255,.35);
+      font-weight: 800; letter-spacing: .5px;
+    }
+    h1 { margin: 0; font-size: clamp(20px, 4vw, 28px); }
+    .muted { color: var(--muted); font-size: 14px; }
+
+    .toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:14px; }
+    .search {
+      flex:1 1 320px; display:flex; align-items:center; gap:10px;
+      background: var(--panel); border:1px solid rgba(255,255,255,.08);
+      border-radius: 14px; padding: 10px 12px; box-shadow: var(--shadow);
+    }
+    .search input {
+      all:unset; flex:1; color:var(--text); font-size:16px;
+    }
+    .btn, .toggle {
+      appearance:none; border:1px solid rgba(255,255,255,.12); color:var(--text);
+      background: linear-gradient(180deg, #12203a, #0f1b31);
+      padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600;
+      box-shadow: var(--shadow);
+    }
+    .btn:hover, .toggle:hover { border-color: rgba(255,255,255,.25); }
+
+    main { padding: 28px 20px 60px; }
+    .grid {
+      max-width: 1200px; margin: 0 auto;
+      display:grid; gap:18px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      overflow: hidden; display:flex; flex-direction:column;
+      box-shadow: var(--shadow);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,.45); }
+    .thumb { aspect-ratio: 16 / 9; width: 100%; background:#0a0f1a; display:block; object-fit: cover; }
+    .card-body { padding: 14px; display:flex; flex-direction:column; gap:8px; }
+    .title { font-weight: 700; font-size: 16px; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 6px; }
+    .pill {
+      font-size: 12px; color: #cfe1ff; background: rgba(10,132,255,.12);
+      border: 1px solid rgba(10,132,255,.2); padding: 4px 8px; border-radius: 999px;
+    }
+    .play, .open {
+      flex:1; text-align:center; text-decoration:none; color:white; font-weight:700;
+      background: linear-gradient(180deg, #1e9bff, #0a84ff 60%);
+      border: none; border-radius: 12px; padding:10px 12px;
+      box-shadow: 0 10px 24px var(--ring);
+    }
+    .open { background: transparent; border:1px solid rgba(255,255,255,.18); font-weight:600; }
+
+    footer { text-align:center; color:var(--muted); padding: 40px 20px; }
+
+    /* Light mode (toggle-able) */
+    .light { --bg:#f6f9ff; --panel:#ffffff; --text:#101225; --muted:#566077; --brand:#0a84ff; --ring:rgba(10,132,255,.25); }
+    .light body { background: linear-gradient(180deg, #f6f9ff 0%, #eef3ff 100%); }
+    .light header { background: color-mix(in oklab, #ffffff 85%, transparent); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">KG</div>
+        <div>
+          <h1>KidCode Games</h1>
+          <div class="muted">Play simple, one‑page browser games — built with love.</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search" role="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/></svg>
+          <input id="q" type="text" placeholder="Search games by name or tag…" autocomplete="off" />
+        </div>
+        <button class="toggle" id="modeBtn" type="button" aria-pressed="false">🌙 Toggle theme</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid" id="grid" aria-live="polite">
+      <!-- ✅ SAMPLE CARDS — replace hrefs with your game files. Thumbs are optional. -->
+      
+      <article class="card" data-tags="arcade classic" data-name="Retro Hockey">
+        <img class="thumb" loading="lazy" alt="Retro Hockey thumbnail"
+             src="https://picsum.photos/seed/hockey/800/450" />
+        <div class="card-body">
+          <div class="title">Retro Hockey</div>
+          <div class="meta">Fast arcade hockey. Two players or vs CPU.</div>
+          <div class="row">
+            <span class="pill">Arcade</span><span class="pill">2‑Player</span>
+          </div>
+          <div class="row">
+            <a class="play" href="games/retro-hockey.html">▶ Play</a>
+            <a class="open" href="games/retro-hockey.html" target="_blank" rel="noopener">↗ Open</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" data-tags="puzzle kids" data-name="Pumpkin Archer">
+        <img class="thumb" loading="lazy" alt="Pumpkin Archer thumbnail"
+             src="https://picsum.photos/seed/archer/800/450" />
+        <div class="card-body">
+          <div class="title">Pumpkin Archer</div>
+          <div class="meta">Aim, draw, and pop the spooky targets.</div>
+          <div class="row"><span class="pill">Bow & Arrow</span><span class="pill">Halloween</span></div>
+          <div class="row">
+            <a class="play" href="games/pumpkin-archer.html">▶ Play</a>
+            <a class="open" href="games/pumpkin-archer.html" target="_blank" rel="noopener">↗ Open</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" data-tags="racing cars" data-name="Highway Dash">
+        <img class="thumb" loading="lazy" alt="Highway Dash thumbnail"
+             src="https://picsum.photos/seed/race/800/450" />
+        <div class="card-body">
+          <div class="title">Highway Dash</div>
+          <div class="meta">Dodge traffic, snag power‑ups, chase the best time.</div>
+          <div class="row"><span class="pill">Racing</span><span class="pill">Endless</span></div>
+          <div class="row">
+            <a class="play" href="games/highway-dash.html">▶ Play</a>
+            <a class="open" href="games/highway-dash.html" target="_blank" rel="noopener">↗ Open</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card" data-tags="dog wash kids casual" data-name="Coquette Dog Wash">
+        <img class="thumb" loading="lazy" alt="Coquette Dog Wash thumbnail"
+             src="https://picsum.photos/seed/puppy/800/450" />
+        <div class="card-body">
+          <div class="title">Coquette Dog Wash</div>
+          <div class="meta">Scrub pups, earn stars, unlock cuteness overload.</div>
+          <div class="row"><span class="pill">Casual</span><span class="pill">Kids</span></div>
+          <div class="row">
+            <a class="play" href="games/coquette-dog-wash.html">▶ Play</a>
+            <a class="open" href="games/coquette-dog-wash.html" target="_blank" rel="noopener">↗ Open</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Duplicate or add more <article> blocks as you build new games. -->
+    </div>
+  </main>
+
+  <footer>
+    <div>© <span id="year"></span> KidCode Games • Built by Keith Calhoun</div>
+    <div class="muted">Tip: put each game in <code>/games/your-game.html</code> and update the links above.</div>
+  </footer>
+
+  <script>
+    // Theme toggle with localStorage
+    const bodyClass = document.documentElement.classList;
+    const modeBtn = document.getElementById('modeBtn');
+    const saved = localStorage.getItem('kg:theme');
+    if (saved === 'light') bodyClass.add('light');
+    modeBtn.addEventListener('click', () => {
+      const isLight = bodyClass.toggle('light');
+      localStorage.setItem('kg:theme', isLight ? 'light' : 'dark');
+      modeBtn.setAttribute('aria-pressed', String(isLight));
+    });
+
+    // Search filter by name or tag
+    const q = document.getElementById('q');
+    const cards = [...document.querySelectorAll('.card')];
+    q.addEventListener('input', () => {
+      const term = q.value.trim().toLowerCase();
+      let shown = 0;
+      cards.forEach(card => {
+        const hay = (card.dataset.name + ' ' + card.dataset.tags).toLowerCase();
+        const match = !term || hay.includes(term);
+        card.style.display = match ? '' : 'none';
+        if (match) shown++;
+      });
+      document.getElementById('grid').setAttribute('data-count', shown);
+    });
+
+    // Current year in footer
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
