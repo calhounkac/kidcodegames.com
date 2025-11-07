@@ -12,35 +12,87 @@
       color: white;
       text-align: center;
     }
-    header img { width: 100%; max-height: 280px; object-fit: cover; border-bottom: 4px solid white; }
-    h1 { margin-top: 20px; font-size: 2.5em; text-shadow: 2px 2px #000; }
-    .game-list { display:flex; flex-wrap:wrap; justify-content:center; gap:30px; padding:40px 0; }
-    .game { background:rgba(0,0,0,0.3); border:2px solid white; border-radius:15px; width:260px; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.4); transition:transform .2s; }
-    .game:hover { transform:scale(1.05); background:rgba(255,255,255,0.1); }
-    .game img { width:100%; border-radius:10px; border:2px solid white; }
-    .game a { color: yellow; text-decoration:none; font-size:1.2em; display:block; margin-top:10px; }
-    footer { padding:20px; background:rgba(0,0,0,0.3); font-size:0.9em; }
+
+    header img {
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      border-bottom: 4px solid white;
+    }
+
+    h1 {
+      margin-top: 20px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px #000;
+    }
+
+    .game-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      padding: 40px 0;
+    }
+
+    .game {
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid white;
+      border-radius: 15px;
+      width: 260px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
+    }
+
+    .game:hover {
+      transform: scale(1.05);
+      background: rgba(255,255,255,0.1);
+    }
+
+    .game img {
+      width: 100%;
+      border-radius: 10px;
+      border: 2px solid white;
+    }
+
+    .game a {
+      color: yellow;
+      text-decoration: none;
+      font-size: 1.2em;
+      display: block;
+      margin-top: 10px;
+    }
+
+    .coming-soon {
+      opacity: 0.7;
+    }
+
+    footer {
+      padding: 20px;
+      background: rgba(0,0,0,0.3);
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
+  <!-- Banner Section -->
   <header>
-    <img src="assets/banner.png" alt="KidCode Games Banner">
+    <img src="/assets/banner.png" alt="KidCode Games Banner">
   </header>
 
+  <!-- Page Title -->
   <h1>Welcome to KidCode Games!</h1>
 
+  <!-- Game Links -->
   <div class="game-list">
+
+    <!-- Game 1 -->
     <div class="game">
-      <img src="assets/screenshots/halloweenbowarrow.png" alt="Halloween Bow &amp; Arrow">
-      <a href="games/halloweenbowarrow.html">Play Halloween Bow &amp; Arrow</a>
+      <img src="/assets/screenshots/halloweenbowarrow.png" alt="Halloween Bow &amp; Arrow">
+      <a href="/games/halloweenbowarrow.html">Play Halloween Bow &amp; Arrow</a>
     </div>
 
+    <!-- Game 2 -->
     <div class="game">
-      <img src="assets/screenshots/slapshotdual.png" alt="Slapshot Dual">
-      <a href="games/slapshotdual.html">Play Slapshot Dual</a>
-    </div>
-  </div>
-
-  <footer>© 2025 KidCode Games — Built with fun and creativity!</footer>
-</body>
-</html>
+      <img src="/assets/screenshots/slapshotdual.png" alt="Slapshot Dual">
+      <a href="/games/slapshotdual.html"
