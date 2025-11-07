@@ -74,6 +74,25 @@
     }
   </style>
 </head>
+  <script>
+(function () {
+  const tests = [
+    { id: 'link-halloween', primary: '/games/halloweenbowarrow.html', fallback: '/halloweenbowarrow.html' },
+    { id: 'link-slapshot',  primary: '/games/slapshotdual.html',      fallback: '/slapshotdual.html' }
+  ];
+
+  tests.forEach(async ({ id, primary, fallback }) => {
+    try {
+      const res = await fetch(primary, { method: 'HEAD', cache: 'no-store' });
+      if (!res.ok) document.getElementById(id).href = fallback;
+      else document.getElementById(id).href = primary;
+    } catch {
+      document.getElementById(id).href = fallback;
+    }
+  });
+})();
+</script>
+
 <body>
   <!-- Banner Section -->
   <header>
