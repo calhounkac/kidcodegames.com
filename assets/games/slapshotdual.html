@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hockey Rink Pong — 2 Player</title>
+  <style>
+    :root{
+      --bg: #0b1220;
+      --rink-ice: #dff3ff;
+      --rink-line-red: #cf2b2b;
+      --rink-line-blue: #2b6ccf;
+      --board: #e8f6ff;
+      --shadow: rgba(0,0,0,.35);
+      --text: #0b1220;
+      --hud: #ffffff;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(1200px 800px at 50% 0%, #0e1830, var(--bg));
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--hud);
+      overflow: hidden;
+    }
+    .wrap{display:grid;place-items:center;height:100%;gap:12px}
+    #gameCanvas{box-shadow:0 20px 60px var(--shadow), inset 0 0 60px rgba(0,0,0,.15);background:var(--rink-ice);border-radius:28px}
+    .topbar{
+      position: fixed; inset: 16px 16px auto 16px; display:flex; justify-content:space-between; align-items:center; gap:16px;
+      pointer-events:none;
+    }
+    .score{
+      backdrop-filter: blur(6px);
+      background: rgba(0,0,0,.35);
+      padding: 10px 16px; border-radius:14px; font-weight:700; letter-spacing:.5px; display:flex; gap:20px; align-items:center; pointer-events:auto;
+    }
+    .score span{font-size: clamp(18px, 3vw, 28px)}
+    .badge{font-size:12px; opacity:.9; background: rgba(255,255,255,.15); padding:4px 8px; border-radius:999px}
+    .controls{
+      position:fixed; left:16px; right:16px; bottom:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center;
+      backdrop-filter: blur(6px); background: rgba(0,0,0,.25); padding:10px 14px; border-radius:12px; pointer-events:auto;
+      font-size: 12px;
+    }
+    kbd{background:#1116; color:#fff; padding:2px 6px; border-radius:6px; border:1px solid #fff3; box-shadow: inset 0 -1px 0 #0006; font-weight:600}
+    button{
+      pointer-events:auto; cursor:pointer; border:none; border-radius:10px; padding:10px 14px; font-weight:700; letter-spacing:.4px;
+      background:#ffffff; color:#0b1220; box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+    button:active{transform:translateY(1px)}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="score" id="scoreHUD" aria-live="polite">
+      <span id="leftScore">0</span>
+      <span class="badge">Hockey Pong</span>
+      <span id="rightScore">0</span>
+    </div>
+    <div class="score"><span id="status">Press Space to Start</span></div>
+  </div>
+  <div class="wrap">
+    <canvas id="gameCanvas" width="1200" height="650" aria-label="Hockey Pong game area"></canvas>
+  </div>
+  <div class="controls">
+    <span>Left: <kbd>W</kbd>/<kbd>S</kbd></span>
+    <span>Right: <kbd>↑</kbd>/<kbd>↓</kbd></span>
+    <span>Pause/Start: <kbd>Space</kbd></span>
+    <span>Reset round: <kbd>R</kbd></span>
+    <span>New game: <kbd>N</kbd></span>
+    <button id="btnPause">Pause</button>
+    <button id="btnNew">New Game</button>
+  </div>
+
+  <script>
+  (()=>{
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const leftScoreEl = document.getElementById('leftScore');
+    const rightScoreEl = document.getElementById('rightScore');
+    const btnPause = document.getElementById('btnPause');
+    const btnNew = document.getElementById('btnNew');
+
+    // Layout / scale
+    function fitCanvas(){
+      const margin = 24;
+      const maxW = innerWidth - margin*2;
+      const maxH = innerHeight - 140; // room for HUD/controls
+      const targetRatio = 12/6.5; // keep proportions of 1200x650 rink
+      let w = maxW, h = Math.round(maxW/targetRatio);
+      if(h>maxH){ h=maxH; w=Math.round(h*targetRatio); }
+      canvas.style.width = w+'px';
+      canvas.style.height = h+'px';
+    }
+    addEventListener('resize', fitCanvas); fitCanvas();
+
+    // Game constants
+    const RINK = { x: 40, y: 40, w: canvas.width-80, h: canvas.height-80, r: 48 };
+    const GOAL_LINE_OFFSET = 70; // from each end
+    const BLUE_LINE_OFFSET = 200; // from center each way
+
+    const PADDLE_W = 18, PADDLE_H = 110, PADDLE_RADIUS = 9, PADDLE_SPEED = 8;
+    const PUCK_R = 12;
+    const MAX_SCORE = 7;
+
+    let leftPaddle = { x: RINK.x + 30, y: canvas.height/2 - PADDLE_H/2, vy:0, score:0, color:'#0ea5e9' };
+    let rightPaddle = { x: RINK.x + RINK.w - 30 - PADDLE_W, y: canvas.height/2 - PADDLE_H/2, vy:0, score:0, color:'#ef4444' };
+
+    let puck, running=false, lastTime=0, serveDir = Math.random()<.5? -1: 1, gameOver=false;
+
+    function newPuck(dir=1){
+      puck = {
+        x: canvas.width/2,
+        y: canvas.height/2,
+        vx: dir * rand(5.5, 6.5),
+        vy: rand(-3.2, 3.2),
+        r: PUCK_R
+      };
+    }
+    function newGame(){
+      leftPaddle.score = 0; rightPaddle.score = 0;
+      leftScoreEl.textContent = '0'; rightScoreEl.textContent = '0';
+      gameOver=false; serveDir = Math.random()<.5? -1: 1; newPuck(serveDir);
+      status.textContent = 'Press Space to Start';
+    }
+
+    function rand(a,b){return a + Math.random()*(b-a)}
+
+    // Input
+    const keys = new Set();
+    addEventListener('keydown', e=>{
+      if(['Space','ArrowUp','ArrowDown','KeyW','KeyS','KeyR','KeyN'].includes(e.code)) e.preventDefault();
+      keys.add(e.code);
+      if(e.code==='Space') togglePause();
+      if(e.code==='KeyR') { pointOver(); }
+      if(e.code==='KeyN') { newGame(); running=false; }
+    });
+    addEventListener('keyup', e=> keys.delete(e.code));
+
+    btnPause.addEventListener('click', togglePause);
+    btnNew.addEventListener('click', ()=>{ newGame(); running=false; })
+
+    function togglePause(){
+      if(gameOver) return; running = !running; status.textContent = running? 'Playing…' : 'Paused';
+    }
+
+    // Draw helpers
+    function roundRect(x,y,w,h,r){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+    }
+
+    function drawRink(){
+      // Boards
+      ctx.save();
+      roundRect(RINK.x, RINK.y, RINK.w, RINK.h, RINK.r);
+      ctx.clip();
+      // Ice
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-ice');
+      ctx.fillRect(RINK.x, RINK.y, RINK.w, RINK.h);
+
+      // Center red line
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-red');
+      ctx.lineWidth = 6;
+      let cx = canvas.width/2;
+      ctx.beginPath(); ctx.moveTo(cx, RINK.y); ctx.lineTo(cx, RINK.y+RINK.h); ctx.stroke();
+
+      // Blue lines
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-blue');
+      [cx-BLUE_LINE_OFFSET, cx+BLUE_LINE_OFFSET].forEach(x=>{
+        ctx.beginPath(); ctx.moveTo(x, RINK.y); ctx.lineTo(x, RINK.y+RINK.h); ctx.stroke();
+      });
+
+      // Goal lines
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-red');
+      [RINK.x+GOAL_LINE_OFFSET, RINK.x+RINK.w-GOAL_LINE_OFFSET].forEach(x=>{
+        ctx.beginPath(); ctx.moveTo(x, RINK.y); ctx.lineTo(x, RINK.y+RINK.h); ctx.stroke();
+      });
+
+      // Faceoff circles
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-red');
+      const circleR = 36;
+      const offsY = RINK.h/3;
+      [[cx, canvas.height/2, true], // center (with dot)
+       [RINK.x+RINK.w*0.25, RINK.y+offsY, false],
+       [RINK.x+RINK.w*0.25, RINK.y+RINK.h-offsY, false],
+       [RINK.x+RINK.w*0.75, RINK.y+offsY, false],
+       [RINK.x+RINK.w*0.75, RINK.y+RINK.h-offsY, false]
+      ].forEach(([x,y,hasDot])=>{
+        ctx.beginPath(); ctx.arc(x,y,circleR,0,Math.PI*2); ctx.stroke();
+        if(hasDot){ ctx.fillStyle = '#cf2b2b'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill(); }
+      });
+
+      ctx.restore();
+
+      // Outer board edge
+      ctx.strokeStyle = '#b9d8ea';
+      ctx.lineWidth = 8;
+      roundRect(RINK.x, RINK.y, RINK.w, RINK.h, RINK.r);
+      ctx.stroke();
+    }
+
+    function drawPaddle(p){
+      ctx.save();
+      ctx.fillStyle = p.color;
+      const x=p.x, y=p.y, w=PADDLE_W, h=PADDLE_H, r=PADDLE_RADIUS;
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawPuck(){
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI*2);
+      ctx.fillStyle = '#111';
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Physics and update
+    function clamp(v,a,b){return Math.max(a, Math.min(b,v))}
+
+    function update(){
+      // paddles
+      leftPaddle.vy = (keys.has('KeyW')?-PADDLE_SPEED:0) + (keys.has('KeyS')?PADDLE_SPEED:0);
+      rightPaddle.vy = (keys.has('ArrowUp')?-PADDLE_SPEED:0) + (keys.has('ArrowDown')?PADDLE_SPEED:0);
+      leftPaddle.y = clamp(leftPaddle.y + leftPaddle.vy, RINK.y, RINK.y+RINK.h-PADDLE_H);
+      rightPaddle.y = clamp(rightPaddle.y + rightPaddle.vy, RINK.y, RINK.y+RINK.h-PADDLE_H);
+
+      // puck
+      puck.x += puck.vx; puck.y += puck.vy;
+
+      // wall collisions (top/bottom within rounded boards area)
+      const top = RINK.y + puck.r, bottom = RINK.y + RINK.h - puck.r;
+      if(puck.y < top){ puck.y = top; puck.vy *= -1; thwack(); }
+      if(puck.y > bottom){ puck.y = bottom; puck.vy *= -1; thwack(); }
+
+      // paddle collisions
+      function collide(p){
+        const nextX = puck.x + puck.vx;
+        const withinY = (puck.y > p.y-2) && (puck.y < p.y+PADDLE_H+2);
+        if(withinY){
+          if(p===leftPaddle && nextX - puck.r <= p.x + PADDLE_W && puck.x >= p.x){
+            puck.x = p.x + PADDLE_W + puck.r;
+            puck.vx = Math.abs(puck.vx) * 1.04; // a little faster
+            const rel = (puck.y - (p.y + PADDLE_H/2)) / (PADDLE_H/2);
+            puck.vy = clamp(puck.vy + rel*4.2, -7.5, 7.5);
+            thwack();
+          }
+          if(p===rightPaddle && nextX + puck.r >= p.x && puck.x <= p.x + PADDLE_W){
+            puck.x = p.x - puck.r;
+            puck.vx = -Math.abs(puck.vx) * 1.04;
+            const rel = (puck.y - (p.y + PADDLE_H/2)) / (PADDLE_H/2);
+            puck.vy = clamp(puck.vy + rel*4.2, -7.5, 7.5);
+            thwack();
+          }
+        }
+      }
+      collide(leftPaddle); collide(rightPaddle);
+
+      // goals
+      if(puck.x < RINK.x - 10){
+        // right scores
+        score(rightPaddle);
+      } else if(puck.x > RINK.x + RINK.w + 10){
+        // left scores
+        score(leftPaddle);
+      }
+    }
+
+    function score(player){
+      if(gameOver) return;
+      player.score++;
+      leftScoreEl.textContent = String(leftPaddle.score);
+      rightScoreEl.textContent = String(rightPaddle.score);
+      cheer();
+      if(player.score >= MAX_SCORE){
+        status.textContent = (player===leftPaddle? 'Left':'Right') + ' wins! Press N for New Game';
+        running=false; gameOver=true; return;
+      }
+      // next serve towards conceding side
+      serveDir = (player===leftPaddle)? 1 : -1; // send toward the player who was scored on
+      pointOver();
+    }
+
+    function pointOver(){ newPuck(serveDir); status.textContent = running? 'Playing…' : 'Paused'; }
+
+    // Audio (WebAudio minimal)
+    const AudioCtx = window.AudioContext || window.webkitAudioContext; let audio;
+    function ping(freq, dur=0.05, type='square', gain=.08){
+      if(!audio){ try{ audio = new AudioCtx(); }catch(e){ return; } }
+      const t = audio.currentTime;
+      const o = audio.createOscillator(); const g = audio.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = gain;
+      o.connect(g).connect(audio.destination);
+      o.start(t); o.stop(t+dur);
+    }
+    function thwack(){ ping(220, .04, 'square', .06); }
+    function cheer(){ ping(660, .08, 'triangle', .08); setTimeout(()=>ping(990,.08,'triangle',.07), 60); }
+
+    function render(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      drawRink();
+      drawPaddle(leftPaddle); drawPaddle(rightPaddle); drawPuck();
+    }
+
+    function loop(ts){
+      if(!lastTime) lastTime = ts;
+      if(running && !gameOver){ update(); }
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    // Init
+    newGame(); newPuck(serveDir); render(); requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>
