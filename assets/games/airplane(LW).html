@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airplane Game</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #87ceeb; /* sky blue */
+    font-family: sans-serif;
+  }
+  canvas {
+    display: block;
+    background: linear-gradient(#87ceeb, #00bfff);
+  }
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 24px;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+  }
+</style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let plane = {
+  x: 100,
+  y: canvas.height / 2,
+  width: 60,
+  height: 40,
+  speed: 5
+};
+
+let bullets = [];
+let obstacles = [];
+let score = 0;
+let gameOver = false;
+
+// Handle controls
+const keys = {};
+document.addEventListener('keydown', e => keys[e.key] = true);
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+// Shoot bullets
+document.addEventListener('keydown', e => {
+  if(e.key === ' ') {
+    bullets.push({x: plane.x + plane.width, y: plane.y + plane.height/2 - 5, width: 10, height: 5, speed: 10});
+  }
+});
+
+function spawnObstacle() {
+  const height = Math.random() * 200 + 50;
+  obstacles.push({x: canvas.width, y: Math.random() * (canvas.height - height), width: 50, height: height, speed: 4});
+}
+
+// Update game state
+function update() {
+  if(gameOver) return;
+
+  // Move plane
+  if(keys['ArrowUp'] && plane.y > 0) plane.y -= plane.speed;
+  if(keys['ArrowDown'] && plane.y + plane.height < canvas.height) plane.y += plane.speed;
+
+  // Move bullets
+  bullets.forEach((b, i) => {
+    b.x += b.speed;
+    if(b.x > canvas.width) bullets.splice(i, 1);
+  });
+
+  // Move obstacles
+  obstacles.forEach((o, i) => {
+    o.x -= o.speed;
+    if(o.x + o.width < 0) {
+      obstacles.splice(i, 1);
+      score++;
+      document.getElementById('score').innerText = "Score: " + score;
+    }
+
+    // Collision detection
+    if(plane.x < o.x + o.width &&
+       plane.x + plane.width > o.x &&
+       plane.y < o.y + o.height &&
+       plane.y + plane.height > o.y) {
+      gameOver = true;
+      alert("Game Over! Final Score: " + score);
+      location.reload();
+    }
+
+    // Bullet hits obstacle
+    bullets.forEach((b,j) => {
+      if(b.x < o.x + o.width &&
+         b.x + b.width > o.x &&
+         b.y < o.y + o.height &&
+         b.y + b.height > o.y) {
+        bullets.splice(j,1);
+        obstacles.splice(i,1);
+        score++;
+        document.getElementById('score').innerText = "Score: " + score;
+      }
+    });
+  });
+}
+
+// Draw game
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw plane
+  ctx.fillStyle = 'red';
+  ctx.fillRect(plane.x, plane.y, plane.width, plane.height);
+
+  // Draw bullets
+  ctx.fillStyle = 'yellow';
+  bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+
+  // Draw obstacles
+  ctx.fillStyle = 'green';
+  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
+}
+
+// Game loop
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// Spawn obstacles every 1.5 seconds
+setInterval(spawnObstacle, 1500);
+
+loop();
+</script>
+</body>
+</html>
