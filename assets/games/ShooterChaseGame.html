@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Arc Raiders: Raid Mission</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(#0b0d16, #010103);
+      color: white;
+      font-family: monospace;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #10121a;
+      border: 2px solid #44ccff;
+    }
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #00ffff;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    Health: <span id="hp">100</span> |
+    Score: <span id="score">0</span> |
+    Time Left: <span id="timer">90</span>s
+  </div>
+  <canvas id="game" width="800" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const hpDisplay = document.getElementById('hp');
+    const scoreDisplay = document.getElementById('score');
+    const timerDisplay = document.getElementById('timer');
+
+    // Player
+    const player = { x: 400, y: 300, r: 15, speed: 3, hp: 100 };
+    const keys = {};
+    document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    // Bullets & Enemies
+    const bullets = [];
+    const enemies = [];
+    let lastEnemySpawn = 0;
+    let score = 0;
+    let raidTime = 90; // seconds
+
+    // Extraction zone (appears after timer hits 0)
+    let extractionActive = false;
+    const extraction = { x: Math.random() * 700 + 50, y: Math.random() * 500 + 50, r: 40 };
+
+    // Shooting
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const angle = Math.atan2(my - player.y, mx - player.x);
+      bullets.push({
+        x: player.x,
+        y: player.y,
+        dx: Math.cos(angle) * 7,
+        dy: Math.sin(angle) * 7,
+        r: 4
+      });
+    });
+
+    // Main update
+    function update(dt) {
+      // Timer
+      raidTime -= dt;
+      if (raidTime < 0 && !extractionActive) {
+        extractionActive = true;
+      }
+      timerDisplay.textContent = Math.max(0, raidTime.toFixed(0));
+
+      // Movement
+      if (keys['w']) player.y -= player.speed;
+      if (keys['s']) player.y += player.speed;
+      if (keys['a']) player.x -= player.speed;
+      if (keys['d']) player.x += player.speed;
+      player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
+      player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
+
+      // Bullets
+      for (let b of bullets) {
+        b.x += b.dx;
+        b.y += b.dy;
+      }
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height)
+          bullets.splice(i, 1);
+      }
+
+      // Enemies spawn faster if extraction is active
+      const spawnRate = extractionActive ? 500 : 1000;
+      if (performance.now() - lastEnemySpawn > spawnRate) {
+        lastEnemySpawn = performance.now();
+        const side = Math.floor(Math.random() * 4);
+        let x, y;
+        if (side === 0) { x = Math.random() * canvas.width; y = -20; }
+        else if (side === 1) { x = Math.random() * canvas.width; y = canvas.height + 20; }
+        else if (side === 2) { x = -20; y = Math.random() * canvas.height; }
+        else { x = canvas.width + 20; y = Math.random() * canvas.height; }
+        enemies.push({ x, y, r: 12, speed: 1.5 });
+      }
+
+      // Enemies chase player
+      for (let e of enemies) {
+        const angle = Math.atan2(player.y - e.y, player.x - e.x);
+        e.x += Math.cos(angle) * e.speed;
+        e.y += Math.sin(angle) * e.speed;
+      }
+
+      // Bullet hits enemy
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        for (let j = bullets.length - 1; j >= 0; j--) {
+          const b = bullets[j];
+          const dx = e.x - b.x, dy = e.y - b.y;
+          if (Math.hypot(dx, dy) < e.r + b.r) {
+            enemies.splice(i, 1);
+            bullets.splice(j, 1);
+            score += 10;
+            scoreDisplay.textContent = score;
+            break;
+          }
+        }
+      }
+
+      // Enemy hits player
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        const dx = e.x - player.x, dy = e.y - player.y;
+        if (Math.hypot(dx, dy) < e.r + player.r) {
+          enemies.splice(i, 1);
+          player.hp -= 10;
+          hpDisplay.textContent = player.hp;
+          if (player.hp <= 0) {
+            alert("Mission Failed — Raider lost in the Arc!");
+            document.location.reload();
+          }
+        }
+      }
+
+      // Extraction win condition
+      if (extractionActive) {
+        const dx = player.x - extraction.x;
+        const dy = player.y - extraction.y;
+        if (Math.hypot(dx, dy) < extraction.r) {
+          alert(`Extraction complete! Score: ${score}`);
+          document.location.reload();
+        }
+      }
+    }
+
+    // Draw everything
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Stars
+      for (let i = 0; i < 50; i++) {
+        ctx.fillStyle = '#111';
+        ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1, 1);
+      }
+
+      // Player
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+      ctx.fillStyle = '#00ffff';
+      ctx.fill();
+
+      // Bullets
+      ctx.fillStyle = '#44ccff';
+      for (let b of bullets) {
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Enemies
+      ctx.fillStyle = '#ff4444';
+      for (let e of enemies) {
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Extraction zone
+      if (extractionActive) {
+        ctx.beginPath();
+        ctx.arc(extraction.x, extraction.y, extraction.r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.font = "14px monospace";
+        ctx.fillStyle = "#00ff88";
+        ctx.fillText("EXTRACTION", extraction.x - 35, extraction.y - extraction.r - 10);
+      }
+    }
+
+    // Game loop
+    let lastTime = performance.now();
+    function loop(t) {
+      const dt = (t - lastTime) / 1000;
+      lastTime = t;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
