@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2-Player Rap Battle</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        input {
+            padding: 10px;
+            width: 60%;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .score {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .winner {
+            font-size: 24px;
+            color: #ff0;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 2-Player Rap Battle 🎤</h1>
+
+    <div id="round-info">Round: 1</div>
+
+    <div>
+        <input type="text" id="rapLine" placeholder="Type your rap line here...">
+        <br>
+        <button onclick="submitLine()">Drop Line</button>
+    </div>
+
+    <div class="score" id="player1Score">Player 1 Score: 0</div>
+    <div class="score" id="player2Score">Player 2 Score: 0</div>
+
+    <div class="winner" id="winner"></div>
+
+    <script>
+        let player1Score = 0;
+        let player2Score = 0;
+        let round = 1;
+        const totalRounds = 3;
+        let currentPlayer = 1;
+
+        function scoreLine(line) {
+            const lengthScore = Math.min(line.split(' ').length, 10);
+            const creativityScore = Math.floor(Math.random() * 11); // 0-10
+            return lengthScore + creativityScore;
+        }
+
+        function submitLine() {
+            const lineInput = document.getElementById("rapLine");
+            const line = lineInput.value.trim();
+            if (!line) return alert("You must type a rap line!");
+
+            const score = scoreLine(line);
+
+            if (currentPlayer === 1) {
+                player1Score += score;
+                document.getElementById("player1Score").textContent = `Player 1 Score: ${player1Score}`;
+                currentPlayer = 2;
+                alert(`Player 1 scores ${score} points! Player 2's turn.`);
+            } else {
+                player2Score += score;
+                document.getElementById("player2Score").textContent = `Player 2 Score: ${player2Score}`;
+                currentPlayer = 1;
+                round++;
+                document.getElementById("round-info").textContent = `Round: ${round}`;
+                alert(`Player 2 scores ${score} points!`);
+            }
+
+            lineInput.value = "";
+
+            if (round > totalRounds) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            const winnerDiv = document.getElementById("winner");
+            if (player1Score > player2Score) {
+                winnerDiv.textContent = "🏆 Player 1 wins the rap battle! 🏆";
+            } else if (player2Score > player1Score) {
+                winnerDiv.textContent = "🏆 Player 2 wins the rap battle! 🏆";
+            } else {
+                winnerDiv.textContent = "🤝 It's a tie! Both players are fire! 🔥";
+            }
+
+            document.querySelector("button").disabled = true;
+            document.getElementById("rapLine").disabled = true;
+        }
+    </script>
+</body>
+</html>
