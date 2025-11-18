@@ -49,18 +49,53 @@
       background: rgba(255,255,255,0.1);
     }
 
-    .game img {
+    .game-media {
+      position: relative;
+      width: 100%;
+    }
+
+    .game img,
+    .game video {
       width: 100%;
       border-radius: 10px;
       border: 2px solid white;
+      display: block;
+    }
+
+    .preview-video {
+      display: none;
+    }
+
+    /* Hover swap: only on devices that support hover (desktops, laptops) */
+    @media (hover: hover) and (pointer: fine) {
+      .game:hover .preview-image {
+        display: none;
+      }
+      .game:hover .preview-video {
+        display: block;
+      }
     }
 
     .game a {
-      color: yellow;
       text-decoration: none;
-      font-size: 1.2em;
       display: block;
       margin-top: 10px;
+    }
+
+    .play-link {
+      color: yellow;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .preview-link {
+      color: #ffeb3b;
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .preview-link:hover {
+      text-decoration: underline;
     }
 
     .platform-note {
@@ -84,46 +119,165 @@
   </header>
 
   <div class="game-list">
-    <!-- Game 1 -->
+    <!-- Game 1: Halloween Bow & Arrow -->
     <div class="game">
-      <img src="/assets/screenshots/halloweenbowarrow.png" alt="Halloween Bow &amp; Arrow">
-      <a href="/assets/games/halloweenbowarrow.html">Play Halloween Bow &amp; Arrow</a>
+      <div class="game-media">
+        <img src="/assets/screenshots/halloweenbowarrow.png"
+             alt="Halloween Bow &amp; Arrow"
+             class="preview-image">
+        <video
+          class="preview-video"
+          src="/PreviewClips/halloweenbowarrow.mov"
+          muted
+          loop
+          playsinline>
+        </video>
+      </div>
+      <a href="/assets/games/halloweenbowarrow.html" class="play-link">
+        Play Halloween Bow &amp; Arrow
+      </a>
+      <a href="/PreviewClips/halloweenbowarrow.mov" target="_blank" class="preview-link">
+        ▶ Watch Preview
+      </a>
       <div class="platform-note">(Best on Mobile &amp; Computer)</div>
     </div>
 
-    <!-- Game 2 -->
+    <!-- Game 2: Slapshot Dual -->
     <div class="game">
-      <img src="/assets/screenshots/slapshotdual.png" alt="Slapshot Dual">
-      <a href="/assets/games/slapshotdual.html">Play Slapshot Dual</a>
+      <div class="game-media">
+        <img src="/assets/screenshots/slapshotdual.png"
+             alt="Slapshot Dual"
+             class="preview-image">
+        <video
+          class="preview-video"
+          src="/PreviewClips/slapshotdual.mov"
+          muted
+          loop
+          playsinline>
+        </video>
+      </div>
+      <a href="/assets/games/slapshotdual.html" class="play-link">
+        Play Slapshot Dual
+      </a>
+      <a href="/PreviewClips/slapshotdual.mov" target="_blank" class="preview-link">
+        ▶ Watch Preview
+      </a>
       <div class="platform-note">(Best on Computer)</div>
     </div>
 
-    <!-- Game 3 -->
+    <!-- Game 3: Airplane -->
     <div class="game">
-      <img src="/assets/screenshots/airplanered.png" alt="Airplane">
-      <a href="/assets/games/airplane.html">Play Airplane</a>
+      <div class="game-media">
+        <img src="/assets/screenshots/airplanered.png"
+             alt="Airplane"
+             class="preview-image">
+        <video
+          class="preview-video"
+          src="/PreviewClips/airplane.mov"
+          muted
+          loop
+          playsinline>
+        </video>
+      </div>
+      <a href="/assets/games/airplane.html" class="play-link">
+        Play Airplane
+      </a>
+      <a href="/PreviewClips/airplane.mov" target="_blank" class="preview-link">
+        ▶ Watch Preview
+      </a>
       <div class="platform-note">(Best on Computer)</div>
     </div>
 
-    <!-- Game 4 -->
+    <!-- Game 4: Pixel Racer -->
     <div class="game">
-      <img src="/assets/screenshots/pixelracer.png" alt="Pixel Racer">
-      <a href="/assets/games/pixelracer.html">Play Pixel Racer</a>
+      <div class="game-media">
+        <img src="/assets/screenshots/pixelracer.png"
+             alt="Pixel Racer"
+             class="preview-image">
+        <video
+          class="preview-video"
+          src="/PreviewClips/pixelracer.mov"
+          muted
+          loop
+          playsinline>
+        </video>
+      </div>
+      <a href="/assets/games/pixelracer.html" class="play-link">
+        Play Pixel Racer
+      </a>
+      <a href="/PreviewClips/pixelracer.mov" target="_blank" class="preview-link">
+        ▶ Watch Preview
+      </a>
       <div class="platform-note">(Best on Computer)</div>
     </div>
 
-    <!-- Game 5 -->
+    <!-- Game 5: Shooter Chase -->
     <div class="game">
-      <img src="/assets/screenshots/shooterchase.png" alt="Shooter Chase">
-      <a href="/assets/games/shooterchasegame.html">Play Shooter Chase</a>
+      <div class="game-media">
+        <img src="/assets/screenshots/shooterchase.png"
+             alt="Shooter Chase"
+             class="preview-image">
+        <video
+          class="preview-video"
+          src="/PreviewClips/shooterchase.mov"
+          muted
+          loop
+          playsinline>
+        </video>
+      </div>
+      <a href="/assets/games/shooterchasegame.html" class="play-link">
+        Play Shooter Chase
+      </a>
+      <a href="/PreviewClips/shooterchase.mov" target="_blank" class="preview-link">
+        ▶ Watch Preview
+      </a>
       <div class="platform-note">(Best on Computer)</div>
     </div>
 
-    <!-- Game 6 (NEW: Rap Game) -->
+    <!-- Game 6: Rap Battle Game -->
     <div class="game">
-      <img src="/assets/screenshots/rapbattle.png" alt="Rap Battle Game">
-      <a href="/assets/games/rapgame.html">Play Rap Battle Game</a>
-      <div class="platform-note">(Best on Mobile & Computer)</div>
+      <div class="game-media">
+        <img src="/assets/screenshots/rapbattle.png"
+             alt="Rap Battle Game"
+             class="preview-image">
+        <video
+          class="preview-video"
+          src="/PreviewClips/rapgame.mov"
+          muted
+          loop
+          playsinline>
+        </video>
+      </div>
+      <a href="/assets/games/rapgame.html" class="play-link">
+        Play Rap Battle Game
+      </a>
+      <a href="/PreviewClips/rapgame.mov" target="_blank" class="preview-link">
+        ▶ Watch Preview
+      </a>
+      <div class="platform-note">(Best on Mobile &amp; Computer)</div>
+    </div>
+
+    <!-- Game 7: Frog Jumper (NEW) -->
+    <div class="game">
+      <div class="game-media">
+        <img src="/assets/screenshots/frogjumper.png"
+             alt="Frog Jumper"
+             class="preview-image">
+        <video
+          class="preview-video"
+          src="/PreviewClips/frogjumper.mov"
+          muted
+          loop
+          playsinline>
+        </video>
+      </div>
+      <a href="/assets/games/frogjumper.html" class="play-link">
+        Play Frog Jumper
+      </a>
+      <a href="/PreviewClips/frogjumper.mov" target="_blank" class="preview-link">
+        ▶ Watch Preview
+      </a>
+      <div class="platform-note">(Best on Computer)</div>
     </div>
 
   </div>
