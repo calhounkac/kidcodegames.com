@@ -11,6 +11,7 @@
       background: #001427;
       font-family: "Arial", sans-serif;
       user-select: none;
+      touch-action: none; /* prevent scroll on mobile while using controls */
     }
     canvas {
       display: block;
@@ -18,10 +19,94 @@
       background: #001427;
       border: 3px solid #ffffff;
     }
+
+    /* --- MOBILE CONTROLS (LEFT / JUMP / RIGHT) --- */
+    #mobile-controls {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 999;
+    }
+
+    #mobile-controls button {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      background: rgba(0, 0, 0, 0.7);
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #mobile-controls button:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* --- RESTART + BACK TO KIDCODE --- */
+    #meta-buttons {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 999;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #meta-buttons button {
+      min-width: 120px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 2px solid #ffffff;
+      background: rgba(0, 0, 0, 0.85);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #meta-buttons button:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Slightly smaller on tiny phones */
+    @media (max-width: 480px) {
+      #mobile-controls button {
+        width: 60px;
+        height: 60px;
+        font-size: 26px;
+      }
+      #meta-buttons button {
+        min-width: 110px;
+        font-size: 13px;
+      }
+    }
   </style>
 </head>
 <body>
 <canvas id="game" width="700" height="900"></canvas>
+
+<!-- MOBILE CONTROLS -->
+<div id="mobile-controls">
+  <button id="btn-left">⟵</button>
+  <button id="btn-jump">⤒</button>
+  <button id="btn-right">⟶</button>
+</div>
+
+<!-- RESTART + BACK BUTTONS -->
+<div id="meta-buttons">
+  <button id="btn-restart">🔁 Restart</button>
+  <button id="btn-home">🏠 Back to KidCode</button>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -133,7 +218,7 @@ for (let i = 0; i < 140; i++) {
   });
 }
 
-// Input
+// Input - keyboard
 document.addEventListener("keydown", (e) => {
   keys[e.code] = true;
 
@@ -152,6 +237,60 @@ document.addEventListener("keyup", (e) => {
   keys[e.code] = false;
 });
 
+// --- MOBILE / MOUSE BUTTON CONTROLS ---
+const btnLeft = document.getElementById("btn-left");
+const btnRight = document.getElementById("btn-right");
+const btnJump = document.getElementById("btn-jump");
+const btnRestart = document.getElementById("btn-restart");
+const btnHome = document.getElementById("btn-home");
+
+function addButtonControl(button, keyCode) {
+  if (!button) return;
+
+  const press = (e) => {
+    e.preventDefault();
+    keys[keyCode] = true;
+  };
+  const release = (e) => {
+    e.preventDefault();
+    keys[keyCode] = false;
+  };
+
+  button.addEventListener("mousedown", press);
+  button.addEventListener("mouseup", release);
+  button.addEventListener("mouseleave", release);
+
+  button.addEventListener("touchstart", press, { passive: false });
+  button.addEventListener("touchend", release, { passive: false });
+  button.addEventListener("touchcancel", release, { passive: false });
+}
+
+// Map mobile buttons to same keys game already uses
+addButtonControl(btnLeft, "ArrowLeft");
+addButtonControl(btnRight, "ArrowRight");
+addButtonControl(btnJump, "Space");
+
+// Restart button: go back to menu and reset full game
+if (btnRestart) {
+  const handleRestart = (e) => {
+    e.preventDefault();
+    resetGame();
+  };
+  btnRestart.addEventListener("click", handleRestart);
+  btnRestart.addEventListener("touchstart", handleRestart, { passive: false });
+}
+
+// Back to KidCode index (assuming this file is in assets/games/)
+if (btnHome) {
+  const handleHome = (e) => {
+    e.preventDefault();
+    window.location.href = "../../index.html";
+  };
+  btnHome.addEventListener("click", handleHome);
+  btnHome.addEventListener("touchstart", handleHome, { passive: false });
+}
+
+// Menu click for color selection
 canvas.addEventListener("click", (e) => {
   if (state !== "menu") return;
   const rect = canvas.getBoundingClientRect();
@@ -592,7 +731,7 @@ function drawObstacles() {
       ctx.beginPath();
       ctx.ellipse(obs.x + obs.w / 2, sy + obs.h / 2, 24, 18, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#9e9e9e";
+      ctx.fillStyle = "#9e9e3e";
       ctx.beginPath();
       ctx.ellipse(obs.x + obs.w / 2 - 8, sy + obs.h / 2 - 8, 8, 6, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -602,7 +741,6 @@ function drawObstacles() {
       ctx.fillStyle = "#3e2723";
       ctx.fillRect(obs.x + 6, sy + 10, obs.w - 12, 12);
     } else if (obs.type === "ice") {
-      // Icy patches (level theme hazard)
       ctx.fillStyle = "rgba(144,202,249,0.9)";
       ctx.beginPath();
       ctx.ellipse(obs.x + obs.w / 2, sy + obs.h / 2, obs.w / 2, obs.h / 3, 0, 0, Math.PI * 2);
@@ -613,7 +751,6 @@ function drawObstacles() {
       ctx.ellipse(obs.x + obs.w / 2, sy + obs.h / 2, obs.w / 2 - 6, obs.h / 3 - 4, 0, 0, Math.PI * 2);
       ctx.stroke();
     } else if (obs.type === "fence") {
-      // Wooden safety fence
       ctx.strokeStyle = "#5d4037";
       ctx.lineWidth = 4;
       const posts = 3;
@@ -633,7 +770,6 @@ function drawObstacles() {
       ctx.lineTo(obs.x + obs.w, sy + obs.h - 22);
       ctx.stroke();
     } else if (obs.type === "snowman") {
-      // Snowman obstacle
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(obs.x + obs.w / 2, sy + obs.h - 40, 16, 0, Math.PI * 2);
@@ -725,8 +861,6 @@ function drawPlayer(customX, customY, scale = 1) {
   const drawX = px + pushSwayX;
   const drawY = py + pushOffsetY;
 
-  // Shadow removed
-
   const centerX = drawX + (player.width * scale) / 2;
   const centerY = drawY + (player.height * scale) / 2;
 
@@ -750,7 +884,7 @@ function drawPlayer(customX, customY, scale = 1) {
     ctx.rotate(tilt * 0.6);
   }
 
-  // Board (longer and more stylized, diagonally like emoji)
+  // Board
   ctx.save();
   ctx.translate(0, h / 2 + 2 * scale);
   ctx.rotate(tilt - 0.2);
@@ -763,7 +897,6 @@ function drawPlayer(customX, customY, scale = 1) {
   ctx.fillStyle = "#111";
   const boardLength = w + 30 * scale;
   const boardThickness = 7 * scale;
-  const boardOffset = 10 * scale;
   if (ctx.roundRect) {
     ctx.roundRect(-boardLength / 2, -boardThickness / 2, boardLength, boardThickness, 4 * scale);
     ctx.fill();
@@ -790,19 +923,17 @@ function drawPlayer(customX, customY, scale = 1) {
   }
   ctx.restore();
 
-  // Legs & boots (sideways stance)
+  // Legs & boots
   ctx.fillStyle = colors.pants;
   ctx.fillRect(lx + 2 * scale, ly + 22 * scale, (w / 2) - 3 * scale, h - 30 * scale);
   ctx.fillRect(lx + (w / 2) + 1 * scale, ly + 24 * scale, (w / 2) - 4 * scale, h - 30 * scale);
 
   ctx.fillStyle = colors.boots;
-  const stanceShift = tilt * 6 * scale; // shift boots along board based on lean
-  // Back boot
+  const stanceShift = tilt * 6 * scale;
   ctx.fillRect(lx + 2 * scale - stanceShift, ly + h - 11 * scale, (w / 2) - 1 * scale, 7 * scale);
-  // Front boot
   ctx.fillRect(lx + (w / 2) + stanceShift, ly + h - 11 * scale, (w / 2) - 2 * scale, 7 * scale);
 
-  // Torso (bright jacket like emoji)
+  // Torso
   const bodyGrad = ctx.createLinearGradient(lx, ly, lx, ly + h);
   bodyGrad.addColorStop(0, colors.jacketTop);
   bodyGrad.addColorStop(1, colors.jacketBottom);
@@ -817,20 +948,18 @@ function drawPlayer(customX, customY, scale = 1) {
   ctx.lineTo(lx + w / 2, ly + h - 18 * scale);
   ctx.stroke();
 
-  // Arms - one forward, one up/back like emoji pose
+  // Arms
   ctx.strokeStyle = colors.jacketBottom;
   ctx.lineWidth = 5 * scale;
   ctx.lineCap = "round";
   ctx.beginPath();
-  // Front arm (downhill)
   ctx.moveTo(lx + w / 2 + 2 * scale, ly + 14 * scale);
   ctx.lineTo(lx + w + 10 * scale, ly + 24 * scale);
-  // Back arm (raised)
   ctx.moveTo(lx + w / 2 - 2 * scale, ly + 14 * scale);
   ctx.lineTo(lx - 10 * scale, ly);
   ctx.stroke();
 
-  // Hands (gloves)
+  // Hands
   ctx.fillStyle = colors.accent;
   ctx.beginPath();
   ctx.arc(lx + w + 10 * scale, ly + 24 * scale, 3.8 * scale, 0, Math.PI * 2);
@@ -889,7 +1018,7 @@ function drawTrickPopups() {
   ctx.textAlign = "left";
 }
 
-// Mini-map showing run progress
+// Mini-map
 function drawMiniMap() {
   if (!trackLength || trackLength <= 0) return;
 
@@ -905,17 +1034,14 @@ function drawMiniMap() {
   ctx.fillRect(x - 4, y - 4, mapW + 8, mapH + 8);
   ctx.globalAlpha = 1.0;
 
-  // Snow/track background
   ctx.fillStyle = "#e0f7ff";
   ctx.fillRect(x, y, mapW, mapH);
 
-  // Narrow track column
   ctx.fillStyle = "#b0bec5";
   const trackX = x + mapW * 0.2;
   const trackW = mapW * 0.6;
   ctx.fillRect(trackX, y, trackW, mapH);
 
-  // Finish line marker
   if (finishObj) {
     const finishPos = Math.min(1, Math.max(0, finishObj.y / trackLength));
     const fy = y + mapH * finishPos;
@@ -927,7 +1053,6 @@ function drawMiniMap() {
     ctx.stroke();
   }
 
-  // Player marker
   const progress = Math.min(1, Math.max(0, cameraY / trackLength));
   const py = y + mapH * progress;
   ctx.fillStyle = "#00c853";
@@ -953,7 +1078,6 @@ function drawHUD() {
   ctx.textAlign = "right";
   ctx.fillText("Level: " + level + " / " + MAX_LEVEL, canvas.width - 24, 34);
 
-  // Mini-map on top-right
   drawMiniMap();
 
   if (state === "countdown") {
@@ -991,7 +1115,7 @@ function drawHUD() {
     ctx.textAlign = "center";
     ctx.fillStyle = "#ffffff";
     ctx.font = "24px Arial";
-    ctx.fillText("Press R to restart", canvas.width / 2, canvas.height / 2 + 90);
+    ctx.fillText("Press R or tap Restart", canvas.width / 2, canvas.height / 2 + 90);
     ctx.textAlign = "left";
   }
 
@@ -1031,7 +1155,7 @@ function drawHUD() {
     ctx.fillText("CHAMPION!", cx, cy + 150);
     ctx.font = "26px Arial";
     ctx.fillText("Gold Medal Unlocked - Level 10 Complete!", cx, cy + 190);
-    ctx.fillText("Press R to ride again", cx, cy + 230);
+    ctx.fillText("Press R or tap Restart", cx, cy + 230);
     ctx.textAlign = "left";
   }
 }
@@ -1097,24 +1221,19 @@ function handleMenuClick(x, y) {
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
   }
 
-  // Jacket
   rects.jacket.forEach((r, i) => {
     if (inside(r)) currentSelection.jacketIndex = i;
   });
-  // Pants
   rects.pants.forEach((r, i) => {
     if (inside(r)) currentSelection.pantsIndex = i;
   });
-  // Gloves
   rects.gloves.forEach((r, i) => {
     if (inside(r)) currentSelection.gloveIndex = i;
   });
-  // Board
   rects.board.forEach((r, i) => {
     if (inside(r)) currentSelection.boardIndex = i;
   });
 
-  // Start button
   if (inside(rects.start)) {
     startFromMenuIfReady();
   }
@@ -1140,7 +1259,6 @@ function drawMenu() {
   ctx.textAlign = "left";
   ctx.font = "20px Arial";
 
-  // Jacket
   ctx.fillStyle = "#ffffff";
   ctx.fillText("Jacket Colors", rects.jacket[0].x, rects.jacket[0].y - 12);
   jacketOptions.forEach((opt, i) => {
@@ -1157,7 +1275,6 @@ function drawMenu() {
     }
   });
 
-  // Pants
   ctx.fillStyle = "#ffffff";
   ctx.fillText("Pants Colors", rects.pants[0].x, rects.pants[0].y - 12);
   pantsOptions.forEach((opt, i) => {
@@ -1171,7 +1288,6 @@ function drawMenu() {
     }
   });
 
-  // Gloves
   ctx.fillStyle = "#ffffff";
   ctx.fillText("Glove Colors", rects.gloves[0].x, rects.gloves[0].y - 12);
   gloveOptions.forEach((opt, i) => {
@@ -1185,7 +1301,6 @@ function drawMenu() {
     }
   });
 
-  // Board
   ctx.fillStyle = "#ffffff";
   ctx.fillText("Board Colors", rects.board[0].x, rects.board[0].y - 12);
   boardOptions.forEach((opt, i) => {
@@ -1199,7 +1314,6 @@ function drawMenu() {
     }
   });
 
-  // Start button
   const sb = rects.start;
   ctx.fillStyle = "#00c853";
   ctx.fillRect(sb.x, sb.y, sb.w, sb.h);
