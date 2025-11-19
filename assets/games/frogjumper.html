@@ -61,12 +61,43 @@
       background: rgba(255, 255, 255, 0.15);
     }
 
+    /* Extra buttons: Restart + Back to KidCode */
+    #meta-buttons {
+      margin-top: 10px;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    #meta-buttons button {
+      min-width: 120px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 2px solid #ffffff;
+      background: rgba(0, 0, 0, 0.8);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #meta-buttons button:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
     /* Slightly smaller controls on very small screens */
     @media (max-width: 480px) {
       #touch-controls button {
         width: 56px;
         height: 56px;
         font-size: 24px;
+      }
+      #meta-buttons button {
+        min-width: 110px;
+        font-size: 13px;
+        padding: 8px 12px;
       }
     }
   </style>
@@ -82,6 +113,12 @@
     <button id="btn-down">▼</button>
     <button id="btn-right">▶</button>
   </div>
+</div>
+
+<!-- Extra controls: Restart + Back -->
+<div id="meta-buttons">
+  <button id="btn-restart">🔁 Restart</button>
+  <button id="btn-home">🏠 Back to KidCode</button>
 </div>
 
 <script>
@@ -299,7 +336,7 @@ function drawVehicle(s) {
     drawPixelRect(bladeX, y + 6, 4, h - 4, accent);
   } else {
     const bumpX = s.speed > 0 ? cellX + w - 4 : cellX;
-    drawPixelRect(bumpX, y + 10, 4, h - 10, accent);
+    drawPixelRect(bumpX, y + 10, 4, 10, accent);
   }
 
   const headY = y + 10;
@@ -791,7 +828,7 @@ function loop() {
       canvas.height / 2 + 30
     );
     context.fillText(
-      "Press Enter to restart",
+      "Press Enter or tap Restart",
       canvas.width / 2,
       canvas.height / 2 + 60
     );
@@ -879,6 +916,30 @@ bindButton("btn-up", "up");
 bindButton("btn-down", "down");
 bindButton("btn-left", "left");
 bindButton("btn-right", "right");
+
+// --- Restart button (mobile + desktop click) ---
+const btnRestart = document.getElementById("btn-restart");
+if (btnRestart) {
+  const handleRestart = (ev) => {
+    ev.preventDefault();
+    resetGameToStart();
+  };
+  btnRestart.addEventListener("click", handleRestart);
+  btnRestart.addEventListener("touchstart", handleRestart, { passive: false });
+}
+
+// --- Back to KidCode button ---
+const btnHome = document.getElementById("btn-home");
+if (btnHome) {
+  const handleHome = (ev) => {
+    ev.preventDefault();
+    // assuming this file lives in assets/games/frogjumper.html
+    // this goes back to the main KidCode index
+    window.location.href = "../../index.html";
+  };
+  btnHome.addEventListener("click", handleHome);
+  btnHome.addEventListener("touchstart", handleHome, { passive: false });
+}
 
 // --------- START ---------
 levelMessageTimer = 120;
