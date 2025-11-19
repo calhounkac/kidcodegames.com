@@ -3,6 +3,8 @@
 <head>
   <title>Arcade-Style Frogger – Clean HUD</title>
   <meta charset="UTF-8" />
+  <!-- Mobile-friendly scaling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
     html, body {
       height: 100%;
@@ -11,19 +13,76 @@
     body {
       background: #000;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: monospace;
+      touch-action: none; /* prevent scroll during taps/swipes */
     }
     canvas {
       border: 4px solid #333;
       background: #000;
       image-rendering: pixelated;
+      /* Scale nicely on phones while keeping internal resolution */
+      width: min(100vw - 24px, 624px);
+      height: auto;
+      max-height: 70vh;
+    }
+
+    /* Mobile touch controls */
+    #touch-controls {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+    }
+
+    #touch-controls-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    #touch-controls button {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      background: rgba(0, 0, 0, 0.7);
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #touch-controls button:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Slightly smaller controls on very small screens */
+    @media (max-width: 480px) {
+      #touch-controls button {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+      }
     }
   </style>
 </head>
 <body>
 <canvas id="game" width="624" height="720"></canvas>
+
+<!-- On-screen mobile controls -->
+<div id="touch-controls">
+  <button id="btn-up">▲</button>
+  <div id="touch-controls-row">
+    <button id="btn-left">◀</button>
+    <button id="btn-down">▼</button>
+    <button id="btn-right">▶</button>
+  </div>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -639,7 +698,7 @@ function loop() {
   // Row 1: Center only (shorter text to avoid width overlap)
   context.textAlign = "center";
   context.fillText(
-    "Arrow keys to move",
+    "Arrow keys or buttons to move",
     canvas.width / 2,
     20
   );
@@ -745,30 +804,22 @@ function loop() {
   );
 }
 
-// --------- INPUT (with jump cooldown + hop + restart) ---------
-document.addEventListener("keydown", (e) => {
-  // Restart on Enter if GAME OVER
-  if (gameOver) {
-    if (e.key === "Enter") {
-      resetGameToStart();
-    }
-    return;
-  }
-
-  if (!canMove) return;
+// --------- MOVEMENT HELPER (desktop + mobile) ---------
+function tryMove(direction) {
+  if (gameOver || !canMove) return;
 
   let moved = false;
 
-  if (e.key === "ArrowLeft") {
+  if (direction === "left") {
     frogger.x -= grid;
     moved = true;
-  } else if (e.key === "ArrowRight") {
+  } else if (direction === "right") {
     frogger.x += grid;
     moved = true;
-  } else if (e.key === "ArrowUp") {
+  } else if (direction === "up") {
     frogger.y -= grid;
     moved = true;
-  } else if (e.key === "ArrowDown") {
+  } else if (direction === "down") {
     frogger.y += grid;
     moved = true;
   }
@@ -787,7 +838,47 @@ document.addEventListener("keydown", (e) => {
       canMove = true;
     }, MOVE_COOLDOWN);
   }
+}
+
+// --------- INPUT (keyboard) ---------
+document.addEventListener("keydown", (e) => {
+  // Restart on Enter if GAME OVER
+  if (gameOver) {
+    if (e.key === "Enter") {
+      resetGameToStart();
+    }
+    return;
+  }
+
+  if (e.key === "ArrowLeft") {
+    tryMove("left");
+  } else if (e.key === "ArrowRight") {
+    tryMove("right");
+  } else if (e.key === "ArrowUp") {
+    tryMove("up");
+  } else if (e.key === "ArrowDown") {
+    tryMove("down");
+  }
 });
+
+// --------- INPUT (mobile touch controls) ---------
+function bindButton(id, direction) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+
+  const handlePress = (ev) => {
+    ev.preventDefault();
+    tryMove(direction);
+  };
+
+  btn.addEventListener("mousedown", handlePress);
+  btn.addEventListener("touchstart", handlePress, { passive: false });
+}
+
+bindButton("btn-up", "up");
+bindButton("btn-down", "down");
+bindButton("btn-left", "left");
+bindButton("btn-right", "right");
 
 // --------- START ---------
 levelMessageTimer = 120;
