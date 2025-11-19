@@ -11,6 +11,7 @@
       background: #001427;
       font-family: "Arial", sans-serif;
       user-select: none;
+      touch-action: none; /* important for iPhone so dragging buttons doesn't scroll */
     }
     canvas {
       display: block;
@@ -18,10 +19,94 @@
       background: #001427;
       border: 3px solid #ffffff;
     }
+
+    /* --- MOBILE CONTROLS (LEFT / JUMP / RIGHT) --- */
+    #mobile-controls {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 999;
+    }
+
+    #mobile-controls button {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      background: rgba(0, 0, 0, 0.7);
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #mobile-controls button:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* --- RESTART + BACK TO KIDCODE --- */
+    #meta-buttons {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 999;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #meta-buttons button {
+      min-width: 120px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 2px solid #ffffff;
+      background: rgba(0, 0, 0, 0.85);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #meta-buttons button:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Slightly smaller on tiny phones */
+    @media (max-width: 480px) {
+      #mobile-controls button {
+        width: 60px;
+        height: 60px;
+        font-size: 26px;
+      }
+      #meta-buttons button {
+        min-width: 110px;
+        font-size: 13px;
+      }
+    }
   </style>
 </head>
 <body>
 <canvas id="game" width="700" height="900"></canvas>
+
+<!-- MOBILE CONTROLS -->
+<div id="mobile-controls">
+  <button id="btn-left">⟵</button>
+  <button id="btn-jump">⤒</button>
+  <button id="btn-right">⟶</button>
+</div>
+
+<!-- RESTART + BACK BUTTONS -->
+<div id="meta-buttons">
+  <button id="btn-restart">🔁 Restart</button>
+  <button id="btn-home">🏠 Back to KidCode</button>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -121,6 +206,60 @@ let trackLength = 0;
 const keys = {};
 
 let trickPopups = [];
+
+// --- MOBILE BUTTON CONTROLS ---
+const btnLeft = document.getElementById("btn-left");
+const btnRight = document.getElementById("btn-right");
+const btnJump = document.getElementById("btn-jump");
+const btnRestart = document.getElementById("btn-restart");
+const btnHome = document.getElementById("btn-home");
+
+function addButtonControl(button, keyCode) {
+  if (!button) return;
+
+  const press = (e) => {
+    e.preventDefault();
+    keys[keyCode] = true;
+  };
+
+  const release = (e) => {
+    e.preventDefault();
+    keys[keyCode] = false;
+  };
+
+  button.addEventListener("mousedown", press);
+  button.addEventListener("mouseup", release);
+  button.addEventListener("mouseleave", release);
+
+  button.addEventListener("touchstart", press, { passive: false });
+  button.addEventListener("touchend", release, { passive: false });
+  button.addEventListener("touchcancel", release, { passive: false });
+}
+
+addButtonControl(btnLeft, "ArrowLeft");
+addButtonControl(btnRight, "ArrowRight");
+addButtonControl(btnJump, "Space");
+
+// Restart button uses resetGame()
+if (btnRestart) {
+  const handleRestart = (e) => {
+    e.preventDefault();
+    resetGame();
+  };
+  btnRestart.addEventListener("click", handleRestart);
+  btnRestart.addEventListener("touchstart", handleRestart, { passive: false });
+}
+
+// Back button to KidCode site (adjust path if needed)
+if (btnHome) {
+  const handleHome = (e) => {
+    e.preventDefault();
+    // if this file is /assets/games/snowboardrun.html:
+    window.location.href = "../../index.html";
+  };
+  btnHome.addEventListener("click", handleHome);
+  btnHome.addEventListener("touchstart", handleHome, { passive: false });
+}
 
 // Snow particles
 const snowflakes = [];
@@ -763,7 +902,6 @@ function drawPlayer(customX, customY, scale = 1) {
   ctx.fillStyle = "#111";
   const boardLength = w + 30 * scale;
   const boardThickness = 7 * scale;
-  const boardOffset = 10 * scale;
   if (ctx.roundRect) {
     ctx.roundRect(-boardLength / 2, -boardThickness / 2, boardLength, boardThickness, 4 * scale);
     ctx.fill();
@@ -991,7 +1129,7 @@ function drawHUD() {
     ctx.textAlign = "center";
     ctx.fillStyle = "#ffffff";
     ctx.font = "24px Arial";
-    ctx.fillText("Press R to restart", canvas.width / 2, canvas.height / 2 + 90);
+    ctx.fillText("Press R or tap Restart", canvas.width / 2, canvas.height / 2 + 90);
     ctx.textAlign = "left";
   }
 
@@ -1031,7 +1169,7 @@ function drawHUD() {
     ctx.fillText("CHAMPION!", cx, cy + 150);
     ctx.font = "26px Arial";
     ctx.fillText("Gold Medal Unlocked - Level 10 Complete!", cx, cy + 190);
-    ctx.fillText("Press R to ride again", cx, cy + 230);
+    ctx.fillText("Press R or tap Restart", cx, cy + 230);
     ctx.textAlign = "left";
   }
 }
@@ -1253,7 +1391,6 @@ function gameLoop() {
         level++;
         countdownFrames = 180;
         startLevel();
-        state = "countdown";
       }
     }
   }
