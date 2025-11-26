@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bow & Arrow: Graveyard Night</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #020617;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    .wrap {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100%;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 14px;
+      background: #020617;
+      border-bottom: 1px solid #1f2937;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .btn {
+      background: #0f172a;
+      color: #e5e7eb;
+      border: 1px solid #374151;
+      padding: 5px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      background: #111827;
+    }
+    .header-center {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 230px;
+      flex: 1;
+      max-width: 480px;
+    }
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #1f2937;
+    }
+    .stat label {
+      color: #9ca3af;
+    }
+    .stat span.value {
+      font-weight: 600;
+      color: #facc15;
+    }
+    .bar {
+      height: 8px;
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      overflow: hidden;
+    }
+    .bar > div {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+      transition: width .06s linear;
+    }
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-end;
+      min-width: 200px;
+    }
+    .header-right-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    .kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+    }
+
+    main {
+      padding: 12px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) 320px;
+      gap: 12px;
+      height: 100%;
+    }
+    #canvas {
+      width: 100%;
+      height: 100%;
+      background: #020617;
+      border-radius: 16px;
+      border: 1px solid #1f2937;
+      box-shadow: 0 18px 40px rgba(0,0,0,.55) inset;
+      display: block;
+    }
+    aside {
+      background: #020617;
+      border-radius: 16px;
+      border: 1px solid #1f2937;
+      padding: 10px 12px;
+      display: grid;
+      gap: 8px;
+      align-content: flex-start;
+    }
+    .targets-legend {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      background: #020617;
+      border: 1px solid #1f2937;
+    }
+    .legend-row span.name {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .legend-row span.points {
+      color: #facc15;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .leaderboard {
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px solid #1f2937;
+    }
+    .leaderboard h2 {
+      margin: 0 0 4px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #e5e7eb;
+    }
+    #leaderboardList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 12px;
+    }
+    #leaderboardList li {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 1px 0;
+      border-bottom: 1px dashed rgba(148,163,184,.35);
+    }
+    #leaderboardList li span.name {
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #leaderboardList li span.score {
+      color: #facc15;
+      font-weight: 600;
+    }
+    .hint {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    footer {
+      padding: 6px 14px 8px;
+      font-size: 11px;
+      color: #6b7280;
+      border-top: 1px solid #1f2937;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .header-right {
+        align-items: flex-start;
+      }
+      .header-right-row {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="header-left">
+        <h1>🏹 Bow &amp; Arrow: Graveyard Night</h1>
+        <button id="backBtn" class="btn">Back to KidCodeGames.com</button>
+      </div>
+
+      <div class="header-center">
+        <div class="stats-row">
+          <div class="stat"><label>Score</label><span id="score" class="value">0</span></div>
+          <div class="stat"><label>Shots</label><span id="shots" class="value">0</span></div>
+          <div class="stat"><label>Hits</label><span id="hits" class="value">0</span></div>
+          <div class="stat"><label>Misses</label><span id="misses" class="value">0</span></div>
+          <div class="stat"><label>Accuracy</label><span id="acc" class="value">0%</span></div>
+        </div>
+        <div class="bar"><div id="chargeBar"></div></div>
+      </div>
+
+      <div class="header-right">
+        <div class="header-right-row">
+          <button id="resetBtn" class="btn">Reset (R)</button>
+          <button id="toggleLeaderboardBtn" class="btn">Toggle Leaderboard</button>
+        </div>
+        <div class="header-right-row">
+          <div class="pill">Draw &amp; fire: <span class="kbd">Mouse / Touch</span></div>
+          <div class="pill">Slow-mo: <span class="kbd">S</span></div>
+          <div class="pill">Mute: <span class="kbd">M</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="layout">
+        <canvas id="canvas" width="960" height="540" aria-label="Bow and arrow game canvas"></canvas>
+        <aside>
+          <div class="targets-legend">
+            <div class="legend-row">
+              <span class="name">🎃 Pumpkin</span>
+              <span class="points">10 pts</span>
+            </div>
+            <div class="legend-row">
+              <span class="name">💀 Skeleton</span>
+              <span class="points">20 pts</span>
+            </div>
+            <div class="legend-row">
+              <span class="name">🧙‍♀️ Witch on broom</span>
+              <span class="points">30 pts</span>
+            </div>
+            <div class="legend-row">
+              <span class="name">🧟 Monster from grave</span>
+              <span class="points">5 pts</span>
+            </div>
+            <div class="legend-row">
+              <span class="name">👻 Ghost</span>
+              <span class="points">15 pts</span>
+            </div>
+          </div>
+
+          <div class="leaderboard">
+            <h2>Top Archers</h2>
+            <ul id="leaderboardList"></ul>
+            <p class="hint">Finish a round, then hit <span class="kbd">Reset</span> to save your score.</p>
+          </div>
+
+          <p class="hint">Tip: Aim slightly above your target to account for gravity.</p>
+          <p class="hint">Mobile: tap &amp; hold to draw, release to fire.</p>
+        </aside>
+      </div>
+    </main>
+
+    <footer>
+      HTML5 Canvas game • KidCode style • All art drawn with JavaScript shapes
+    </footer>
+  </div>
+
+  <script>
+    // --------- Utility ---------
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const rand = (a, b) => a + Math.random() * (b - a);
+
+    // --------- Audio (simple beeps) ---------
+    let audioEnabled = true;
+    function beep(freq = 660, dur = 0.06, vol = 0.06) {
+      if (!audioEnabled || !window.AudioContext) return;
+      const ctx = beep.ctx || (beep.ctx = new AudioContext());
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      gain.gain.value = vol;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + dur);
+    }
+
+    // --------- Canvas setup ---------
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let dpr = 1;
+    let graveyard = null; // precomputed graveyard geometry
+
+    function initGraveyard() {
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      const groundY = h - 80;
+
+      // Fence posts
+      const posts = [];
+      const gap = 26;
+      for (let x = 0; x < w + gap; x += gap) {
+        const offset = (x / gap) % 3 * 3; // small deterministic offset
+        posts.push({ x, top: groundY - 20 - offset });
+      }
+
+      // Tombstones
+      const stones = [];
+      const count = Math.max(4, Math.round(w / 140));
+      for (let i = 0; i < count; i++) {
+        const sx = 40 + i * (w / count) + (i % 2 === 0 ? -16 : 12);
+        const sy = groundY - 8 - (8 + (i % 3) * 4);
+        const sw = 28 + (i % 2) * 4;
+        const sh = 34 + (i % 3) * 4;
+        stones.push({ x: sx, y: sy, w: sw, h: sh, variant: i % 2 });
+      }
+
+      graveyard = { groundY, posts, stones, width: w, height: h };
+    }
+
+    function scaleForHiDPI() {
+      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const rectWidth = canvas.width;
+      const rectHeight = canvas.height;
+      canvas.width = rectWidth * dpr;
+      canvas.height = rectHeight * dpr;
+      canvas.style.width = rectWidth + "px";
+      canvas.style.height = rectHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initGraveyard();
+    }
+    scaleForHiDPI();
+    window.addEventListener("resize", scaleForHiDPI);
+
+    // --------- State ---------
+    const state = {
+      score: 0,
+      shots: 0,
+      hits: 0,
+      misses: 0,
+      gameOver: false,
+      arrows: [],
+      targets: [],
+      bow: {
+        x: 80,
+        y: canvas.height / dpr - 140,
+        angle: -0.3,
+        power: 0,
+        drawing: false
+      },
+      gravity: 700,
+      slowmo: false,
+      lastTime: 0,
+      airSpawnTimer: 0,
+      airSpawnEvery: 1.2,
+      graveSpawnTimer: 1.8
+    };
+
+    // --------- UI refs ---------
+    const elScore = document.getElementById("score");
+    const elShots = document.getElementById("shots");
+    const elHits = document.getElementById("hits");
+    const elMisses = document.getElementById("misses");
+    const elAcc = document.getElementById("acc");
+    const elCharge = document.getElementById("chargeBar");
+    const leaderboardList = document.getElementById("leaderboardList");
+
+    function updateHUD() {
+      elScore.textContent = state.score;
+      elShots.textContent = state.shots;
+      elHits.textContent = state.hits;
+      elMisses.textContent = state.misses;
+      const acc = state.shots ? Math.round((state.hits / state.shots) * 100) : 0;
+      elAcc.textContent = acc + "%";
+    }
+
+    // --------- Leaderboard ---------
+    const LB_KEY = "kidcode_bowarrow_top_archers_v2";
+
+    function loadLeaderboard() {
+      try {
+        const raw = localStorage.getItem(LB_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveLeaderboard(entries) {
+      try {
+        localStorage.setItem(LB_KEY, JSON.stringify(entries));
+      } catch (e) {}
+    }
+
+    function addScoreToLeaderboard(name, score) {
+      const entries = loadLeaderboard();
+      const cleanName = (name || "Archer").toString().trim().slice(0, 16) || "Archer";
+      entries.push({ name: cleanName, score, time: Date.now() });
+      entries.sort((a, b) => b.score - a.score || a.time - b.time);
+      saveLeaderboard(entries.slice(0, 10));
+      renderLeaderboard();
+    }
+
+    function renderLeaderboard() {
+      const entries = loadLeaderboard();
+      leaderboardList.innerHTML = "";
+      if (!entries.length) {
+        const li = document.createElement("li");
+        li.textContent = "No scores yet. Take the first shot!";
+        leaderboardList.appendChild(li);
+        return;
+      }
+      entries.forEach((e, i) => {
+        const li = document.createElement("li");
+        const rank = document.createElement("span");
+        rank.textContent = (i + 1) + ".";
+        const name = document.createElement("span");
+        name.className = "name";
+        name.textContent = e.name;
+        const score = document.createElement("span");
+        score.className = "score";
+        score.textContent = e.score;
+        li.appendChild(rank);
+        li.appendChild(name);
+        li.appendChild(score);
+        leaderboardList.appendChild(li);
+      });
+    }
+    renderLeaderboard();
+
+    // --------- Navigation buttons ---------
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "https://kidcodegames.com";
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      resetGame(true);
+    });
+
+    document.getElementById("toggleLeaderboardBtn").addEventListener("click", () => {
+      const style = window.getComputedStyle(leaderboardList.parentElement);
+      leaderboardList.parentElement.style.display =
+        style.display === "none" ? "block" : "none";
+    });
+
+    // --------- Input (mouse & touch) ---------
+    const pointer = { x: 0, y: 0, down: false };
+
+    function getPointerPos(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width) / dpr,
+        y: (clientY - rect.top) * (canvas.height / rect.height) / dpr
+      };
+    }
+
+    canvas.addEventListener("mousemove", (e) => {
+      const pos = getPointerPos(e.clientX, e.clientY);
+      pointer.x = pos.x;
+      pointer.y = pos.y;
+      const dx = pointer.x - state.bow.x;
+      const dy = pointer.y - state.bow.y;
+      state.bow.angle = Math.atan2(dy, dx);
+    });
+
+    canvas.addEventListener("mousedown", () => {
+      if (state.gameOver) return;
+      pointer.down = true;
+      state.bow.drawing = true;
+      beep(220, 0.04, 0.04);
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      releaseShot();
+      pointer.down = false;
+    });
+
+    canvas.addEventListener("mouseleave", () => {
+      if (pointer.down) releaseShot();
+      pointer.down = false;
+    });
+
+    canvas.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      if (state.gameOver) return;
+      const t = e.changedTouches[0];
+      const pos = getPointerPos(t.clientX, t.clientY);
+      pointer.x = pos.x;
+      pointer.y = pos.y;
+      const dx = pointer.x - state.bow.x;
+      const dy = pointer.y - state.bow.y;
+      state.bow.angle = Math.atan2(dy, dx);
+      pointer.down = true;
+      state.bow.drawing = true;
+      beep(220, 0.04, 0.04);
+    }, { passive: false });
+
+    canvas.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      const pos = getPointerPos(t.clientX, t.clientY);
+      pointer.x = pos.x;
+      pointer.y = pos.y;
+      const dx = pointer.x - state.bow.x;
+      const dy = pointer.y - state.bow.y;
+      state.bow.angle = Math.atan2(dy, dx);
+    }, { passive: false });
+
+    canvas.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      releaseShot();
+      pointer.down = false;
+    }, { passive: false });
+
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (k === "r") resetGame(true);
+      if (k === "s") state.slowmo = !state.slowmo;
+      if (k === "m") audioEnabled = !audioEnabled;
+    });
+
+    // --------- Shooting ---------
+    function releaseShot() {
+      if (state.gameOver) {
+        state.bow.drawing = false;
+        state.bow.power = 0;
+        elCharge.style.width = "0%";
+        return;
+      }
+      if (!state.bow.drawing) return;
+      pointer.down = false;
+      state.bow.drawing = false;
+      const power = state.bow.power;
+      if (power < 0.05) {
+        state.bow.power = 0;
+        elCharge.style.width = "0%";
+        return;
+      }
+      const baseSpeed = 450;
+      const speed = baseSpeed + power * 550;
+      const vx = Math.cos(state.bow.angle) * speed;
+      const vy = Math.sin(state.bow.angle) * speed;
+      state.arrows.push({
+        x: state.bow.x + 30 * Math.cos(state.bow.angle),
+        y: state.bow.y + 30 * Math.sin(state.bow.angle),
+        vx,
+        vy,
+        rot: state.bow.angle,
+        alive: true,
+        hit: false,
+        missCounted: false
+      });
+      state.shots++;
+      updateHUD();
+      state.bow.power = 0;
+      elCharge.style.width = "0%";
+      beep(520, 0.06, 0.06);
+    }
+
+    // --------- Targets ---------
+    function spawnAirTarget() {
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      const roll = Math.random();
+
+      // Witch near the moon
+      if (roll < 0.2) {
+        const y = rand(50, 130);
+        state.targets.push({
+          type: "witch",
+          x: w + 60,
+          y,
+          vx: -110,
+          vy: 0,
+          size: 40,
+          value: 30,
+          alive: true,
+          phase: Math.random() * Math.PI * 2
+        });
+        return;
+      }
+
+      // Ghosts floating mid-air
+      if (roll < 0.4) {
+        const fromLeft = Math.random() < 0.5;
+        const y = rand(90, h - 260);
+        const speed = 45 + Math.random() * 45;
+        state.targets.push({
+          type: "ghost",
+          x: fromLeft ? -60 : w + 60,
+          y,
+          vx: fromLeft ? speed : -speed,
+          vy: 0,
+          size: 38,
+          value: 15,
+          alive: true,
+          phase: Math.random() * Math.PI * 2
+        });
+        return;
+      }
+
+      // Regular pumpkins / skeletons
+      const isSkeleton = Math.random() < 0.4;
+      const size = isSkeleton ? 38 : 44;
+      const yBandTop = 120;
+      const yBandBottom = h - 220;
+      const y = rand(yBandTop, yBandBottom);
+      const fromLeft = Math.random() < 0.5;
+      const speed = (isSkeleton ? 85 : 60) * (fromLeft ? 1 : -1);
+      state.targets.push({
+        type: isSkeleton ? "skeleton" : "pumpkin",
+        x: fromLeft ? -60 : w + 60,
+        y,
+        vx: speed,
+        vy: 0,
+        size,
+        value: isSkeleton ? 20 : 10,
+        alive: true
+      });
+    }
+
+    function spawnMonsterFromGrave() {
+      if (!graveyard || !graveyard.stones.length) return;
+      const w = canvas.width / dpr;
+      const stone = graveyard.stones[Math.floor(Math.random() * graveyard.stones.length)];
+      const x = clamp(stone.x, 40, w - 40);
+      const y = stone.y - stone.h / 2;
+      const dir = Math.random() < 0.5 ? -1 : 1;
+      state.targets.push({
+        type: "monster",
+        x,
+        y,
+        vx: dir * (40 + Math.random() * 30),
+        vy: -20 - Math.random() * 30,
+        size: 32,
+        value: 5,
+        alive: true,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    // --------- Particles ---------
+    const particles = [];
+    function makeParticle(x, y, type) {
+      particles.push({
+        x, y,
+        vx: rand(-160, 160),
+        vy: rand(-220, -60),
+        life: 0.5,
+        age: 0,
+        type
+      });
+    }
+
+    function updateParticles(dt) {
+      for (const p of particles) {
+        p.age += dt;
+        p.vy += state.gravity * 0.6 * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+      }
+      for (let i = particles.length - 1; i >= 0; i--) {
+        if (particles[i].age > particles[i].life) particles.splice(i, 1);
+      }
+    }
+
+    // --------- Drawing helpers ---------
+    function drawGraveyard() {
+      if (!graveyard) return;
+      const w = graveyard.width;
+      const h = graveyard.height;
+      const groundY = graveyard.groundY;
+
+      // Ground
+      const groundGrad = ctx.createLinearGradient(0, groundY, 0, h);
+      groundGrad.addColorStop(0, "#020617");
+      groundGrad.addColorStop(1, "#020814");
+      ctx.fillStyle = groundGrad;
+      ctx.fillRect(0, groundY, w, h - groundY);
+
+      // Fog
+      const fogGrad = ctx.createLinearGradient(0, groundY - 40, 0, groundY + 40);
+      fogGrad.addColorStop(0, "rgba(148,163,184,0)");
+      fogGrad.addColorStop(0.5, "rgba(148,163,184,0.22)");
+      fogGrad.addColorStop(1, "rgba(15,23,42,0)");
+      ctx.fillStyle = fogGrad;
+      ctx.fillRect(0, groundY - 40, w, 80);
+
+      // Fence
+      ctx.strokeStyle = "rgba(15,23,42,0.95)";
+      ctx.lineWidth = 3;
+      graveyard.posts.forEach(post => {
+        ctx.beginPath();
+        ctx.moveTo(post.x, groundY + 8);
+        ctx.lineTo(post.x, post.top);
+        ctx.stroke();
+      });
+      ctx.beginPath();
+      ctx.moveTo(0, groundY - 18);
+      ctx.lineTo(w, groundY - 18);
+      ctx.moveTo(0, groundY - 10);
+      ctx.lineTo(w, groundY - 10);
+      ctx.stroke();
+
+      // Tombstones
+      graveyard.stones.forEach(stone => {
+        const { x, y, w: sw, h: sh, variant } = stone;
+        ctx.save();
+        ctx.translate(x, y);
+        const baseFill = variant ? "#1f2937" : "#111827";
+        ctx.fillStyle = baseFill;
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        const r = 8;
+        ctx.moveTo(-sw/2, 0);
+        ctx.lineTo(-sw/2, -sh + r);
+        ctx.quadraticCurveTo(-sw/2, -sh, -sw/2 + r, -sh);
+        ctx.lineTo(sw/2 - r, -sh);
+        ctx.quadraticCurveTo(sw/2, -sh, sw/2, -sh + r);
+        ctx.lineTo(sw/2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Highlight
+        ctx.strokeStyle = "rgba(249,250,251,0.5)";
+        ctx.beginPath();
+        ctx.moveTo(-sw/2 + 2, -sh + r);
+        ctx.lineTo(-sw/2 + 2, -2);
+        ctx.lineTo(sw/2 - 4, -2);
+        ctx.stroke();
+
+        // Symbol
+        ctx.strokeStyle = "rgba(148,163,184,0.9)";
+        ctx.lineWidth = 1.2;
+        if (variant) {
+          ctx.beginPath();
+          ctx.moveTo(0, -sh * 0.7);
+          ctx.lineTo(0, -sh * 0.35);
+          ctx.moveTo(-4, -sh * 0.55);
+          ctx.lineTo(4, -sh * 0.55);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(-sw * 0.18, -sh * 0.3);
+          ctx.lineTo(0, -sh * 0.12);
+          ctx.lineTo(sw * 0.16, -sh * 0.35);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      });
+
+      // Dead tree
+      ctx.save();
+      ctx.translate(w - 140, groundY);
+      ctx.strokeStyle = "#020617";
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-5, -70);
+      ctx.stroke();
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-5, -60);
+      ctx.lineTo(-40, -90);
+      ctx.moveTo(-5, -50);
+      ctx.lineTo(30, -85);
+      ctx.moveTo(-10, -35);
+      ctx.lineTo(-35, -55);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPumpkin(size) {
+      const s = size;
+      ctx.save();
+      ctx.scale(s / 50, s / 50);
+      const grad = ctx.createRadialGradient(0, -4, 6, 0, -6, 26);
+      grad.addColorStop(0, "#fed7aa");
+      grad.addColorStop(1, "#9a3412");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 19, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(124,45,18,0.9)";
+      ctx.lineWidth = 1.6;
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.ellipse(i * 6, 0, 10, 18, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#166534";
+      ctx.beginPath();
+      ctx.moveTo(-3, -17);
+      ctx.quadraticCurveTo(0, -24, 4, -17);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#0b1120";
+      ctx.beginPath();
+      ctx.moveTo(-8, -6);
+      ctx.lineTo(-2, -10);
+      ctx.lineTo(-1, -3);
+      ctx.closePath();
+      ctx.moveTo(8, -6);
+      ctx.lineTo(2, -10);
+      ctx.lineTo(1, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-10, 6);
+      ctx.lineTo(-6, 10);
+      ctx.lineTo(-2, 6);
+      ctx.lineTo(2, 10);
+      ctx.lineTo(6, 6);
+      ctx.lineTo(10, 10);
+      ctx.lineTo(10, 12);
+      ctx.lineTo(-10, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawSkeleton(size) {
+      const s = size;
+      ctx.save();
+      ctx.scale(s / 50, s / 50);
+      ctx.fillStyle = "#e5e7eb";
+      ctx.strokeStyle = "#9ca3af";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.roundRect(-12, -26, 24, 26, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#020617";
+      ctx.beginPath();
+      ctx.arc(-6, -16, 3, 0, Math.PI * 2);
+      ctx.arc(6, -16, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, -11);
+      ctx.lineTo(-2, -7);
+      ctx.lineTo(2, -7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#9ca3af";
+      ctx.beginPath();
+      ctx.moveTo(-6, -4);
+      ctx.lineTo(6, -4);
+      ctx.moveTo(-3, -4);
+      ctx.lineTo(-3, 0);
+      ctx.moveTo(0, -4);
+      ctx.lineTo(0, 0);
+      ctx.moveTo(3, -4);
+      ctx.lineTo(3, 0);
+      ctx.stroke();
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, 18);
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        const y = 4 + i * 4;
+        ctx.beginPath();
+        ctx.moveTo(-10, y);
+        ctx.lineTo(-2, y);
+        ctx.moveTo(2, y);
+        ctx.lineTo(10, y);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.moveTo(0, 6);
+      ctx.lineTo(-10, 12);
+      ctx.lineTo(-14, 22);
+      ctx.moveTo(0, 6);
+      ctx.lineTo(10, 12);
+      ctx.lineTo(14, 22);
+      ctx.moveTo(0, 18);
+      ctx.lineTo(-6, 30);
+      ctx.moveTo(0, 18);
+      ctx.lineTo(6, 30);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawWitch(size, phase) {
+      const s = size;
+      ctx.save();
+      ctx.translate(0, Math.sin(phase) * 3);
+      ctx.scale(s / 60, s / 60);
+      ctx.strokeStyle = "#78350f";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-20, 10);
+      ctx.lineTo(26, 6);
+      ctx.stroke();
+      ctx.fillStyle = "#fbbf24";
+      ctx.beginPath();
+      ctx.moveTo(-28, 12);
+      ctx.lineTo(-20, 6);
+      ctx.lineTo(-20, 14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-26, 16);
+      ctx.lineTo(-20, 10);
+      ctx.lineTo(-18, 18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-24, 20);
+      ctx.lineTo(-19, 14);
+      ctx.lineTo(-16, 22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#111827";
+      ctx.beginPath();
+      ctx.moveTo(0, -4);
+      ctx.lineTo(20, 6);
+      ctx.lineTo(10, 22);
+      ctx.lineTo(-6, 16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, -6);
+      ctx.lineTo(10, 4);
+      ctx.lineTo(2, 10);
+      ctx.lineTo(-4, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#e5e7eb";
+      ctx.beginPath();
+      ctx.arc(2, -10, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#111827";
+      ctx.beginPath();
+      ctx.moveTo(-8, -10);
+      ctx.lineTo(12, -10);
+      ctx.lineTo(2, -6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(2, -18);
+      ctx.lineTo(-2, -10);
+      ctx.lineTo(6, -10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(6, -10);
+      ctx.lineTo(9, -9);
+      ctx.stroke();
+      ctx.strokeStyle = "#020617";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(6, 10);
+      ctx.lineTo(10, 14);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawMonster(size, phase) {
+      const s = size;
+      ctx.save();
+      ctx.translate(0, Math.sin(phase) * 3);
+      ctx.scale(s / 40, s / 40);
+      ctx.fillStyle = "#14532d";
+      ctx.beginPath();
+      ctx.roundRect(-10, -18, 20, 26, 8);
+      ctx.fill();
+      ctx.fillStyle = "#22c55e";
+      ctx.beginPath();
+      ctx.roundRect(-11, -30, 22, 16, 6);
+      ctx.fill();
+      ctx.fillStyle = "#0b1120";
+      ctx.beginPath();
+      ctx.arc(-4, -22, 2, 0, Math.PI * 2);
+      ctx.arc(4, -22, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#0b1120";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-6, -17);
+      ctx.lineTo(6, -17);
+      ctx.stroke();
+      ctx.fillStyle = "#15803d";
+      ctx.beginPath();
+      ctx.moveTo(-10, -10);
+      ctx.lineTo(-16, -4);
+      ctx.lineTo(-12, -2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(10, -10);
+      ctx.lineTo(16, -4);
+      ctx.lineTo(12, -2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawGhost(size, phase) {
+      const s = size;
+      ctx.save();
+      ctx.translate(0, Math.sin(phase) * 4);
+      ctx.scale(s / 40, s / 40);
+      const grad = ctx.createRadialGradient(0, -8, 4, 0, -8, 24);
+      grad.addColorStop(0, "rgba(248,250,252,0.9)");
+      grad.addColorStop(1, "rgba(148,163,184,0.12)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 18, 22, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(248,250,252,0.95)";
+      ctx.beginPath();
+      ctx.moveTo(-14, 4);
+      ctx.quadraticCurveTo(-16, -12, 0, -22);
+      ctx.quadraticCurveTo(16, -12, 14, 4);
+      ctx.quadraticCurveTo(8, 10, 4, 8);
+      ctx.quadraticCurveTo(0, 12, -4, 8);
+      ctx.quadraticCurveTo(-8, 10, -14, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#020617";
+      ctx.beginPath();
+      ctx.arc(-5, -12, 2, 0, Math.PI * 2);
+      ctx.arc(5, -12, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, -6, 3, 0, Math.PI);
+      ctx.strokeStyle = "rgba(15,23,42,0.9)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawTarget(t) {
+      ctx.save();
+      ctx.translate(t.x, t.y);
+      if (t.type === "pumpkin") drawPumpkin(t.size);
+      else if (t.type === "skeleton") drawSkeleton(t.size);
+      else if (t.type === "witch") drawWitch(t.size, t.phase || 0);
+      else if (t.type === "monster") drawMonster(t.size, t.phase || 0);
+      else if (t.type === "ghost") drawGhost(t.size, t.phase || 0);
+      ctx.restore();
+    }
+
+    function drawBow() {
+      const b = state.bow;
+      const x = b.x;
+      const y = b.y;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(b.angle);
+
+      // Bow body (laminated wood)
+      const bowGrad = ctx.createLinearGradient(-40, 0, 40, 0);
+      bowGrad.addColorStop(0, "#7c2d12");
+      bowGrad.addColorStop(0.5, "#b45309");
+      bowGrad.addColorStop(1, "#7c2d12");
+      ctx.strokeStyle = bowGrad;
+      ctx.lineWidth = 7;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.arc(-6, 0, 42, -Math.PI / 2, Math.PI / 2, false);
+      ctx.stroke();
+
+      // Grip
+      ctx.strokeStyle = "#020617";
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(-6, -10);
+      ctx.lineTo(-6, 10);
+      ctx.stroke();
+
+      // String
+      ctx.strokeStyle = "#e5e7eb";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-6, -40);
+      ctx.lineTo(-6 + (b.power * 10), 0);
+      ctx.lineTo(-6, 40);
+      ctx.stroke();
+
+      // Hand
+      ctx.fillStyle = "#f97316";
+      ctx.beginPath();
+      ctx.ellipse(-2, 0, 6, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Simple stand silhouette
+      ctx.fillStyle = "#020617";
+      ctx.fillRect(x - 18, y + 40, 36, 60);
+      ctx.fillRect(x - 10, y + 100, 20, 10);
+    }
+
+    // --------- Main draw ---------
+    function draw() {
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+
+      // Night sky
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, "#020617");
+      skyGrad.addColorStop(1, "#020617");
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Moon
+      ctx.save();
+      const moonX = w - 90;
+      const moonY = 90;
+      const moonR = 32;
+      const haloGrad = ctx.createRadialGradient(moonX, moonY, moonR, moonX, moonY, moonR * 2.4);
+      haloGrad.addColorStop(0, "rgba(248,250,252,0.25)");
+      haloGrad.addColorStop(1, "rgba(15,23,42,0)");
+      ctx.fillStyle = haloGrad;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR * 2.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#e5e7eb";
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#cbd5f5";
+      ctx.beginPath();
+      ctx.arc(moonX + 10, moonY - 6, 4, 0, Math.PI * 2);
+      ctx.arc(moonX - 8, moonY + 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Graveyard
+      drawGraveyard();
+
+      // Bow
+      drawBow();
+
+      // Targets
+      for (const t of state.targets) drawTarget(t);
+
+      // Arrows (more realistic)
+      for (const a of state.arrows) {
+        ctx.save();
+        ctx.translate(a.x, a.y);
+        ctx.rotate(a.rot);
+        ctx.fillStyle = "#92400e";
+        ctx.fillRect(-20, -1.5, 40, 3);
+        ctx.beginPath();
+        ctx.moveTo(20, 0);
+        ctx.lineTo(28, -4);
+        ctx.lineTo(28, 4);
+        ctx.closePath();
+        ctx.fillStyle = "#e5e7eb";
+        ctx.fill();
+        ctx.fillStyle = "#dc2626";
+        ctx.beginPath();
+        ctx.moveTo(-20, -1);
+        ctx.lineTo(-30, -6);
+        ctx.lineTo(-26, 0);
+        ctx.lineTo(-30, 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Particles
+      for (const p of particles) {
+        const t = clamp(1 - p.age / p.life, 0, 1);
+        ctx.globalAlpha = t;
+        let color = "#fed7aa";
+        if (p.type === "skeleton") color = "#e5e7eb";
+        else if (p.type === "witch") color = "#a855f7";
+        else if (p.type === "monster") color = "#4ade80";
+        else if (p.type === "ghost") color = "#e5e7eb";
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3 + 2 * (1 - t), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      // Crosshair
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(239,246,255,0.25)";
+      ctx.lineWidth = 1;
+      ctx.arc(pointer.x, pointer.y, 10, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pointer.x - 14, pointer.y);
+      ctx.lineTo(pointer.x + 14, pointer.y);
+      ctx.moveTo(pointer.x, pointer.y - 14);
+      ctx.lineTo(pointer.x, pointer.y + 14);
+      ctx.stroke();
+
+      // Watermark
+      ctx.fillStyle = "rgba(248,250,252,0.22)";
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText("Hold to draw • Release to shoot • 10 misses = GAME OVER", 14, h - 52);
+
+      // GAME OVER overlay
+      if (state.gameOver) {
+        ctx.save();
+        ctx.fillStyle = "rgba(15,23,42,0.88)";
+        ctx.fillRect(0, 0, w, h);
+        const t = Date.now() / 300;
+        const alpha = 0.6 + 0.4 * Math.sin(t);
+        ctx.globalAlpha = alpha;
+        const grad = ctx.createLinearGradient(w/2 - 150, h/2 - 40, w/2 + 150, h/2 + 40);
+        grad.addColorStop(0, "#f97316");
+        grad.addColorStop(0.5, "#facc15");
+        grad.addColorStop(1, "#fb7185");
+        ctx.fillStyle = grad;
+        ctx.font = "bold 64px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("GAME OVER", w/2, h/2 - 8);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "#e5e7eb";
+        ctx.font = "18px system-ui, sans-serif";
+        ctx.fillText("Press R or Reset to play again", w/2, h/2 + 32);
+        ctx.restore();
+      }
+    }
+
+    // --------- Update ---------
+    function triggerGameOver() {
+      if (state.gameOver) return;
+      state.gameOver = true;
+      state.bow.drawing = false;
+      state.bow.power = 0;
+      elCharge.style.width = "0%";
+      beep(140, 0.18, 0.08);
+    }
+
+    function update(dt) {
+      if (state.gameOver) {
+        // nothing moves except the GAME OVER animation (done in draw)
+        return;
+      }
+
+      // Bow charge
+      if (state.bow.drawing) {
+        state.bow.power = clamp(state.bow.power + dt * 0.7, 0, 1);
+      } else {
+        state.bow.power = clamp(state.bow.power - dt * 2.4, 0, 1);
+      }
+      elCharge.style.width = (state.bow.power * 100).toFixed(0) + "%";
+
+      // Spawn air targets
+      state.airSpawnTimer -= dt;
+      if (state.airSpawnTimer <= 0) {
+        spawnAirTarget();
+        state.airSpawnTimer = rand(state.airSpawnEvery * 0.5, state.airSpawnEvery * 1.3);
+        state.airSpawnEvery = clamp(state.airSpawnEvery - dt * 0.01, 0.65, 1.4);
+      }
+
+      // Spawn monsters from graves
+      state.graveSpawnTimer -= dt;
+      if (state.graveSpawnTimer <= 0) {
+        if (Math.random() < 0.8) spawnMonsterFromGrave();
+        state.graveSpawnTimer = 2.2 + Math.random() * 1.8;
+      }
+
+      // Arrows
+      for (const a of state.arrows) {
+        if (!a.alive) continue;
+        a.vy += state.gravity * dt;
+        a.x += a.vx * dt;
+        a.y += a.vy * dt;
+        a.rot = Math.atan2(a.vy, a.vx);
+        const w = canvas.width;
+        const h = canvas.height;
+        if (a.x > w + 40 || a.x < -40 || a.y > h + 40 || a.y < -40) {
+          if (!a.hit && !a.missCounted) {
+            state.misses++;
+            a.missCounted = true;
+            updateHUD();
+            if (state.misses >= 10) triggerGameOver();
+          }
+          a.alive = false;
+        }
+      }
+
+      // Targets
+      const worldW = canvas.width / dpr;
+      const worldH = canvas.height / dpr;
+      for (const t of state.targets) {
+        if (!t.alive) continue;
+        t.x += (t.vx || 0) * dt;
+        t.y += (t.vy || 0) * dt;
+        if (t.type === "ghost" || t.type === "monster" || t.type === "witch") {
+          t.phase = (t.phase || 0) + dt * 2;
+        }
+        if (t.type === "monster") {
+          t.vy *= 0.96;
+        }
+        if (t.x < -120 || t.x > worldW + 120 || t.y < -120 || t.y > worldH + 120) {
+          t.alive = false;
+        }
+      }
+
+      // Collisions
+      for (const a of state.arrows) {
+        if (!a.alive) continue;
+        for (const t of state.targets) {
+          if (!t.alive) continue;
+          const r = t.size * 0.6;
+          const dx = a.x - t.x * dpr;
+          const dy = a.y - t.y * dpr;
+          // adjust coordinates to same space
+        }
+      }
+
+      // Simpler collision in canvas coords
+      for (const a of state.arrows) {
+        if (!a.alive) continue;
+        for (const t of state.targets) {
+          if (!t.alive) continue;
+          const dx = a.x / dpr - t.x;
+          const dy = a.y / dpr - t.y;
+          const r = t.size * 0.6;
+          if (dx*dx + dy*dy <= r*r) {
+            t.alive = false;
+            a.alive = false;
+            a.hit = true;
+            state.hits++;
+            state.score += t.value;
+            updateHUD();
+            for (let i = 0; i < 10; i++) makeParticle(t.x, t.y, t.type);
+            let freq = 420;
+            if (t.type === "skeleton") freq = 300;
+            else if (t.type === "witch") freq = 520;
+            else if (t.type === "monster") freq = 260;
+            else if (t.type === "ghost") freq = 600;
+            beep(freq, 0.05, 0.06);
+            break;
+          }
+        }
+      }
+
+      // Cleanup
+      state.arrows = state.arrows.filter(a => a.alive);
+      state.targets = state.targets.filter(t => t.alive);
+    }
+
+    // --------- Loop & reset ---------
+    function loop(ts) {
+      if (!state.lastTime) state.lastTime = ts;
+      let dt = (ts - state.lastTime) / 1000;
+      state.lastTime = ts;
+      dt = clamp(dt, 0, 0.032);
+      if (state.slowmo) dt *= 0.35;
+      update(dt);
+      updateParticles(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function resetGame(allowSave) {
+      if (allowSave && state.score > 0) {
+        const name = window.prompt("Nice shooting! Enter your archer name:", "");
+        if (name !== null) addScoreToLeaderboard(name, state.score);
+      }
+      state.score = 0;
+      state.shots = 0;
+      state.hits = 0;
+      state.misses = 0;
+      state.gameOver = false;
+      state.arrows = [];
+      state.targets = [];
+      state.bow.power = 0;
+      state.bow.drawing = false;
+      state.bow.angle = -0.3;
+      state.airSpawnEvery = 1.2;
+      state.airSpawnTimer = 0.5;
+      state.graveSpawnTimer = 1.5;
+      particles.length = 0;
+      updateHUD();
+      elCharge.style.width = "0%";
+      beep(180, 0.06, 0.06);
+    }
+
+    resetGame(false);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
