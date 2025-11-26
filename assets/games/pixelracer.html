@@ -41,7 +41,19 @@
     .overlay{ position:fixed; inset:0; display:grid; place-items:center; pointer-events:none; }
     .overlay .panel{ pointer-events:auto; background:#0e1328cc; width:min(92vw,560px); }
 
-    .scorebar{ grid-column:2; grid-row:1; display:flex; justify-content:center; gap:12px; padding:6px 10px; }
+    
+.pScore{ font-weight:700; font-size:14px; padding:2px 8px; border-radius:999px; background:#05091a; }
+.p1Score{ color:var(--cyan); box-shadow:0 0 12px rgba(41,240,255,0.6); }
+.p2Score{ color:var(--mag); box-shadow:0 0 12px rgba(255,43,189,0.6); }
+.label{ font-size:11px; text-transform:uppercase; letter-spacing:.16em; color:#9ca3af; margin-right:4px; }
+.scorebar{ grid-column:2; grid-row:1; display:flex; justify-content:center; gap:12px; padding:6px 10px; font-size:14px; }
+.scorebar b#p1sTop{ color:var(--cyan); }
+.scorebar b#p2sTop{ color:var(--mag); }
+.backBtn{ align-self:flex-start; margin-top:4px; padding:4px 10px; font-size:11px; border-radius:999px;
+          border:1px solid #1f2937; background:#020617; color:#e5e7eb; cursor:pointer;
+          box-shadow:0 0 12px rgba(15,23,42,0.8); text-transform:uppercase; letter-spacing:.14em; }
+.backBtn:hover{ background:#050b1f; box-shadow:0 0 18px rgba(41,240,255,0.6); border-color:#29f0ff55; }
+.scorebar{ grid-column:2; grid-row:1; display:flex; justify-content:center; gap:12px; padding:6px 10px; }
 
     @media (max-width: 920px){
       #gameWrap{ grid-template-columns: 1fr; }
@@ -56,8 +68,17 @@
   </header>
   <div id="gameWrap">
     <div class="hud">
-      
+      <div class="row">
+        <div>
+          <span class="label">P1</span>
+          <span id="p1s" class="pScore p1Score">0</span>
+        </div>
+        <div>
+          <span class="label">P2</span>
+          <span id="p2s" class="pScore p2Score">0</span>
+        </div>
       </div>
+      <button id="backBtn" class="backBtn">Back to KidCodeGames.com</button>
     </div>
     <div id="scorebar" class="scorebar">Score — P1: <b id="p1sTop">0</b> • P2: <b id="p2sTop">0</b></div>
 
@@ -84,13 +105,50 @@
 
   <script>
   (()=>{
-    const canvas=document.getElementById('game');
-    const ctx=canvas.getContext('2d');
+    
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+
+// --- Simple neon sfx ---
+let audioCtx=null;
+function playTone(freq=880, dur=0.06, vol=0.08, type='square'){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    if(!audioCtx) audioCtx = new AC();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = vol;
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+function playTurnSound(playerId){
+  if(playerId===1){
+    // Higher, sharper click for Player 1
+    playTone(980, 0.05, 0.1, 'square');
+  }else if(playerId===2){
+    // Lower, synthy blip for Player 2 / AI
+    playTone(420, 0.06, 0.09, 'sawtooth');
+  }
+}
+
     const P1S=document.getElementById('p1s');
     const P2S=document.getElementById('p2s');
     const P1T=document.getElementById('p1sTop');
     const P2T=document.getElementById('p2sTop');
     const menu=document.getElementById('menu');
+
+const backBtn = document.getElementById('backBtn');
+if(backBtn){
+  backBtn.addEventListener('click', ()=>{
+    window.location.href = 'https://kidcodegames.com';
+  });
+}
+
     const start1=document.getElementById('start1');
     const start2=document.getElementById('start2');
 
@@ -103,8 +161,8 @@
     let running=false,paused=false,vsAI=true,intermission=false;
     let tickMs=60,lastTime=0,acc=0;
 
-    const board=new Uint8Array(COLS*ROWS);const idx=(x,y)=>y*COLS+x;
-    function resetBoard(){board.fill(0);}
+    const board=new Uint8Array(COLS*ROWS);const idx=(x,y)=>y*COLS+x;const trailAge=new Float32Array(COLS*ROWS);const trailOwner=new Uint8Array(COLS*ROWS);
+    function resetBoard(){board.fill(0);trailAge.fill(0);trailOwner.fill(0);}
 
     function glow(c,a=16){ctx.shadowBlur=a;ctx.shadowColor=c;ctx.strokeStyle=c;ctx.fillStyle=c;}
 
@@ -123,7 +181,18 @@
 
     const keys=new Set();window.addEventListener('keydown',e=>{keys.add(e.code);if(e.code==='KeyR')startRound();if(e.code==='KeyP')paused=!paused;if(e.code==='Digit1'){vsAI=true;startGame();}if(e.code==='Digit2'){vsAI=false;startGame();}if(e.code==='KeyB')dropBarrierInFront(p1);if(e.code==='KeyF')toggleFit();});window.addEventListener('keyup',e=>keys.delete(e.code));
 
-    function setDir(pl,d){pl.pending=d;}
+
+function setDir(pl,d){
+  if(!pl.alive) return;
+  // Avoid spamming when holding the same direction
+  if(pl.dir===d || pl.pending===d) return;
+  pl.pending = d;
+  if(pl === p1){
+    playTurnSound(1);
+  }else if(pl === p2){
+    playTurnSound(2);
+  }
+}
     function pollInput(){if(keys.has('ArrowUp'))setDir(p1,'up');if(keys.has('ArrowDown'))setDir(p1,'down');if(keys.has('ArrowLeft'))setDir(p1,'left');if(keys.has('ArrowRight'))setDir(p1,'right');if(!vsAI){if(keys.has('KeyW'))setDir(p2,'up');if(keys.has('KeyS'))setDir(p2,'down');if(keys.has('KeyA'))setDir(p2,'left');if(keys.has('KeyD'))setDir(p2,'right');}}
     function applyDir(pl){if(!pl.pending)return;pl.dir=pl.pending;pl.pending=null;}
 
@@ -136,7 +205,7 @@
 
     function startRound(){resetBoard();centerPlayers();}
 
-    function step(){if(!running||paused||intermission)return;pollInput();if(vsAI&&p2.alive)aiChoose();applyDir(p1);applyDir(p2);if(p1.barrierCd>0)p1.barrierCd--;if(p2.barrierCd>0)p2.barrierCd--;barrierTimer++;if(barrierTimer%30===0&&barriers.size<200)spawnBarrier();movePlayer(p1);movePlayer(p2);const alive=(p1.alive?1:0)+(p2.alive?1:0);if(alive<=1){if(alive===1){if(p1.alive){p1.score++;updateHUD();flashWin(p1.color,'P1 scores!');}else{p2.score++;updateHUD();flashWin(p2.color,vsAI?'AI scores!':'P2 scores!');}}else{flashWin('#9aa6ff','Double crash!');}intermission=true;setTimeout(()=>{startRound();intermission=false;},700);}if(p1.score>=5||p2.score>=5){running=false;setTimeout(()=>{menu.style.display='block';menu.querySelector('.panel').innerHTML=`<h2>Champion: ${p1.score>p2.score?'P1':'P2/AI'}</h2><p>Final Score — P1: <b>${p1.score}</b> • ${vsAI?'AI':'P2'}: <b>${p2.score}</b></p><div class='options'><button id='again1' class='b-cyan'>Play Again: Single</button><button id='again2' class='b-mag'>Play Again: Two</button></div>`;document.getElementById('again1').onclick=()=>{vsAI=true;p1.score=p2.score=0;startGame();};document.getElementById('again2').onclick=()=>{vsAI=false;p1.score=p2.score=0;startGame();};},800);}}
+    function step(){if(!running||paused||intermission)return;pollInput();if(vsAI&&p2.alive)aiChoose();applyDir(p1);applyDir(p2);if(p1.barrierCd>0)p1.barrierCd--;if(p2.barrierCd>0)p2.barrierCd--;barrierTimer++;if(barrierTimer%30===0&&barriers.size<200)spawnBarrier();movePlayer(p1);movePlayer(p2);const alive=(p1.alive?1:0)+(p2.alive?1:0);if(alive<=1){if(alive===1){if(p1.alive){p1.score++;updateHUD();flashWin(p1.color,'PLAYER 1 WINS!');}else{p2.score++;updateHUD();flashWin(p2.color,vsAI?'AI WINS!':'PLAYER 2 WINS!');}}else{flashWin('#9aa6ff','Double crash!');}intermission=true;setTimeout(()=>{startRound();intermission=false;},700);}if(p1.score>=5||p2.score>=5){running=false;setTimeout(()=>{menu.style.display='block';menu.querySelector('.panel').innerHTML=`<h2>Champion: ${p1.score>p2.score?'P1':'P2/AI'}</h2><p>Final Score — P1: <b>${p1.score}</b> • ${vsAI?'AI':'P2'}: <b>${p2.score}</b></p><div class='options'><button id='again1' class='b-cyan'>Play Again: Single</button><button id='again2' class='b-mag'>Play Again: Two</button></div>`;document.getElementById('again1').onclick=()=>{vsAI=true;p1.score=p2.score=0;startGame();};document.getElementById('again2').onclick=()=>{vsAI=false;p1.score=p2.score=0;startGame();};},800);}}
 
     function movePlayer(pl){if(!pl.alive)return;const[dx,dy]=DIRS[pl.dir];const nx=pl.x+dx,ny=pl.y+dy;if(!isSafeCell(nx,ny)){pl.alive=false;crashFx(pl);return;}board[idx(pl.x,pl.y)]=pl.trailId;pl.x=nx;pl.y=ny;}
 
@@ -148,9 +217,119 @@
 
     function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);for(let y=0;y<ROWS;y++){for(let x=0;x<COLS;x++){const v=board[idx(x,y)];if(v!==0){const color=(v===1)?p1.color:(v===2?p2.color:'#666');drawCell(x,y,color,0.75);}}}glow('#7bf3ff',8);barriers.forEach(i=>{const x=i%COLS,y=Math.floor(i/COLS);drawCell(x,y,'#7bf3ff',0.9,true);});drawLightBike(p1);drawLightBike(p2);ctx.save();glow('#00eaff',20);ctx.lineWidth=4;ctx.strokeRect(2,2,canvas.width-4,canvas.height-4);ctx.restore();}
 
-    function drawCell(x,y,c,a=1,b=false){ctx.save();const px=x*CELL,py=y*CELL,p=1;ctx.globalAlpha=a;ctx.fillStyle=c;ctx.fillRect(px+p,py+p,CELL-p*2,CELL-p*2);if(b){ctx.globalAlpha=.5;ctx.fillRect(px+2,py+2,CELL-4,CELL-4);}ctx.restore();}
+function drawCell(x,y,c,a=1,b=false){
+  const px = x*CELL, py = y*CELL, p = 1;
+  ctx.save();
+  ctx.globalAlpha = a;
 
-    function drawLightBike(pl){if(!pl.alive)return;const [dx,dy]=DIRS[pl.dir];const cx=pl.x*CELL+CELL/2,cy=pl.y*CELL+CELL/2;ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.atan2(dy,dx));ctx.fillStyle=pl.color;ctx.beginPath();ctx.moveTo(5,0);ctx.lineTo(-3,3);ctx.lineTo(-3,-3);ctx.closePath();ctx.fill();ctx.fillRect(-3,-2,3,4);ctx.restore();}
+  // Outer soft glow
+  ctx.shadowBlur = 18;
+  ctx.shadowColor = c;
+  ctx.fillStyle = c;
+  ctx.fillRect(px + p, py + p, CELL - p*2, CELL - p*2);
+
+  // Inner bright "core" line (like a light trail)
+  ctx.shadowBlur = 0;
+  const coreGrad = ctx.createLinearGradient(px, py, px + CELL, py + CELL);
+  coreGrad.addColorStop(0, "#ffffffee");
+  coreGrad.addColorStop(0.4, c);
+  coreGrad.addColorStop(1, "#00000000");
+  ctx.fillStyle = coreGrad;
+  ctx.fillRect(px + 3, py + 3, CELL - 6, CELL - 6);
+
+  // Optional barrier highlight
+  if (b) {
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = "#e0faff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 2, py + 2, CELL - 4, CELL - 4);
+  }
+
+  ctx.restore();
+}
+
+function drawLightBike(pl){
+  if(!pl.alive) return;
+  const [dx,dy] = DIRS[pl.dir];
+  const cx = pl.x*CELL + CELL/2;
+  const cy = pl.y*CELL + CELL/2;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(Math.atan2(dy, dx));
+
+  // Overall neon glow for the bike
+  ctx.shadowBlur = 24;
+  ctx.shadowColor = pl.color;
+
+  // Light jet directly behind the bike (short segment to visually connect to the trail)
+  ctx.fillStyle = pl.color;
+  ctx.globalAlpha = 0.65;
+  ctx.fillRect(-CELL*1.3, -CELL*0.18, CELL*1.3, CELL*0.36);
+
+  // Reset alpha for the bike body
+  ctx.globalAlpha = 1;
+
+  // Wheels - bright neon rims
+  const wheelOffset = CELL * 0.32;
+  const wheelRadius = CELL * 0.32;
+
+  function drawWheel(offset){
+    const grad = ctx.createRadialGradient(offset, 0, 1, offset, 0, wheelRadius);
+    grad.addColorStop(0, "#ffffff");
+    grad.addColorStop(0.4, pl.color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(offset, 0, wheelRadius, 0, Math.PI*2);
+    ctx.fill();
+
+    // Inner rim
+    ctx.strokeStyle = "#ffffffdd";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(offset, 0, wheelRadius*0.65, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  drawWheel(-wheelOffset);
+  drawWheel(wheelOffset);
+
+  // Bike chassis
+  const bodyLength = CELL * 1.2;
+  const bodyHeight = CELL * 0.5;
+  const bodyGrad = ctx.createLinearGradient(-bodyLength*0.1, -bodyHeight/2, bodyLength, bodyHeight/2);
+  bodyGrad.addColorStop(0, "#ffffffee");
+  bodyGrad.addColorStop(0.25, pl.color);
+  bodyGrad.addColorStop(1, "#111827");
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.roundRect(-bodyLength*0.1, -bodyHeight/2, bodyLength, bodyHeight, bodyHeight/2);
+  ctx.fill();
+
+  // Cockpit / rider canopy
+  ctx.fillStyle = "rgba(15,23,42,0.98)";
+  ctx.beginPath();
+  ctx.roundRect(CELL*0.05, -bodyHeight*0.55, CELL*0.55, bodyHeight*1.1, bodyHeight*0.55);
+  ctx.fill();
+
+  // Accent stripe along the side
+  ctx.strokeStyle = "#ffffffdd";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-bodyLength*0.05, bodyHeight*0.05);
+  ctx.lineTo(bodyLength*0.85, bodyHeight*0.05);
+  ctx.stroke();
+
+  // Small front light
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(bodyLength*0.9, 0, CELL*0.12, 0, Math.PI*2);
+  ctx.fill();
+
+  // Reset shadow for other elements
+  ctx.restore();
+}
 
     function loop(t){if(!running)return;const dt=t-lastTime;lastTime=t;acc+=dt;while(acc>=tickMs){step();acc-=tickMs;}draw();requestAnimationFrame(loop);}
 
@@ -172,6 +351,298 @@
     if(fitBtn){ fitBtn.addEventListener('click', toggleFit); }
     if(zoomRange){ zoomRange.addEventListener('input', ()=>{ fitToWindow=false; updateFitLabel(); zoom=parseFloat(zoomRange.value); fit(); }); }
     window.addEventListener('resize', fit);
+
+
+// --- Extra Tron FX: trail decay, powerups, sparks, replay zoom ---
+const powerups = [];
+const turnSparks = [];
+let powerupSpawnTimer = 0;
+let replayTimer = 0;
+
+function updateTrailAges(dt){
+  const decay = 0.8; // per second for "ghost" trails after reset
+  const len = trailAge.length;
+  for(let i=0;i<len;i++){
+    if(board[i]!==0){
+      // Active trail: lock owner & full brightness
+      trailOwner[i] = board[i];
+      trailAge[i] = 1;
+    }else if(trailAge[i]>0){
+      trailAge[i] = Math.max(0, trailAge[i] - decay*dt);
+      if(trailAge[i]<=0) trailOwner[i] = 0;
+    }
+  }
+}
+
+function spawnPowerup(){
+  // Simple: score orbs that give +2 points when collected
+  for(let tries=0; tries<40; tries++){
+    const x = 2 + Math.floor(Math.random()*(COLS-4));
+    const y = 2 + Math.floor(Math.random()*(ROWS-4));
+    const idc = idx(x,y);
+    if(board[idc]===0 && !barriers.has(idc)){
+      powerups.push({x,y,ttl:10});
+      return;
+    }
+  }
+}
+
+function updatePowerups(dt){
+  powerupSpawnTimer -= dt;
+  if(powerupSpawnTimer<=0){
+    if(powerups.length<3){
+      spawnPowerup();
+    }
+    powerupSpawnTimer = 6 + Math.random()*4;
+  }
+  for(let i=powerups.length-1;i>=0;i--){
+    const p = powerups[i];
+    p.ttl -= dt;
+    if(p.ttl<=0){
+      powerups.splice(i,1);
+      continue;
+    }
+    // Check pickup by players
+    if(p1.alive && p.x===p1.x && p.y===p1.y){
+      p1.score += 2;
+      updateHUD();
+      playTone(1180, 0.1, 0.12, 'sine');
+      powerups.splice(i,1);
+      continue;
+    }
+    if(p2.alive && p.x===p2.x && p.y===p2.y){
+      p2.score += 2;
+      updateHUD();
+      playTone(620, 0.1, 0.12, 'sine');
+      powerups.splice(i,1);
+      continue;
+    }
+  }
+}
+
+function spawnTurnSpark(pl){
+  const cx = pl.x*CELL + CELL/2;
+  const cy = pl.y*CELL + CELL/2;
+  turnSparks.push({
+    x: cx,
+    y: cy,
+    age: 0,
+    life: 0.25,
+    color: pl.color
+  });
+}
+
+function updateSparks(dt){
+  for(let i=turnSparks.length-1;i>=0;i--){
+    const s = turnSparks[i];
+    s.age += dt;
+    if(s.age>=s.life){
+      turnSparks.splice(i,1);
+    }
+  }
+}
+
+function drawSparks(){
+  for(const s of turnSparks){
+    const t = s.age / s.life;
+    const alpha = 1 - t;
+    const r = CELL * (0.4 + 0.8*t);
+    const line = CELL * (0.3 + 0.4*t);
+    const ang = t * Math.PI * 2;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(s.x, s.y);
+    ctx.rotate(ang);
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = s.color;
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-line, 0);
+    ctx.lineTo(-r, 0);
+    ctx.moveTo(line, 0);
+    ctx.lineTo(r, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// When a crash happens, existing logic calls crashFx(pl).
+// We extend the effect by also triggering a short replay zoom window.
+const _crashFx_orig = crashFx;
+crashFx = function(pl){
+  replayTimer = 0.65;
+  _crashFx_orig(pl);
+};
+
+function updateReplay(dt){
+  if(replayTimer>0){
+    replayTimer = Math.max(0, replayTimer - dt);
+  }
+}
+
+// Override draw with zoom + glowing floor, trails, bikes, powerups, sparks
+function draw(){
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0,0,w,h);
+
+  // Compute replay zoom factor
+  let zoomFactor = 1;
+  if(replayTimer>0){
+    const t = 1 - (replayTimer / 0.65);
+    zoomFactor = 1 + 0.25*Math.sin(t*Math.PI);
+  }
+
+  ctx.save();
+  ctx.translate(w/2, h/2);
+  ctx.scale(zoomFactor, zoomFactor);
+  ctx.translate(-w/2, -h/2);
+
+  // --- Neon night sky / backdrop ---
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, '#05081a');
+  bgGrad.addColorStop(0.4, '#050a1f');
+  bgGrad.addColorStop(1, '#020308');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0,0,w,h);
+
+  // Horizon glow near the center
+  const horizonY = h * 0.3;
+  const glowGrad = ctx.createRadialGradient(w/2, horizonY, 10, w/2, horizonY, h*0.8);
+  glowGrad.addColorStop(0, 'rgba(41,240,255,0.3)');
+  glowGrad.addColorStop(0.4, 'rgba(41,240,255,0.12)');
+  glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(0,0,w,h);
+
+  // --- Glowing floor grid ---
+  ctx.save();
+  ctx.lineWidth = 1;
+
+  // Horizontal lines
+  for(let y=0; y<=ROWS; y++){
+    const sy = y*CELL;
+    const t = sy / h;
+    ctx.strokeStyle = `rgba(18,32,58,${0.15 + 0.5*t})`;
+    ctx.beginPath();
+    ctx.moveTo(0, sy);
+    ctx.lineTo(w, sy);
+    ctx.stroke();
+  }
+
+  // Vertical lines with cyan glow
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = 'rgba(41,240,255,0.45)';
+  ctx.strokeStyle = 'rgba(18,32,58,0.7)';
+  for(let x=0; x<=COLS; x++){
+    const sx = x*CELL;
+    ctx.beginPath();
+    ctx.moveTo(sx, 0);
+    ctx.lineTo(sx, h);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // --- Trails & barriers ---
+  for(let y=0; y<ROWS; y++){
+    for(let x=0; x<COLS; x++){
+      const idc = idx(x,y);
+      if(barriers.has(idc)){
+        drawCell(x,y,'#ffd43b',0.95,true);
+      }else{
+        const age = trailAge[idc];
+        if(age>0){
+          const owner = trailOwner[idc];
+          let col = '#ffffff';
+          if(owner===1) col = p1.color;
+          else if(owner===2) col = p2.color;
+          const alpha = 0.25 + 0.75*age;
+          drawCell(x,y,col,alpha,false);
+        }
+      }
+    }
+  }
+
+  // --- Powerups ---
+  for(const p of powerups){
+    const px = p.x*CELL + CELL/2;
+    const py = p.y*CELL + CELL/2;
+    const pulse = 0.5 + 0.5*Math.sin(performance.now()/150);
+    const r = CELL*0.45;
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = 'rgba(255,215,113,0.9)';
+    ctx.fillStyle = 'rgba(255,222,141,0.85)';
+    ctx.beginPath();
+    ctx.arc(0,0,r,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.globalAlpha = 0.8;
+    ctx.strokeStyle = '#111827';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0,0,r*0.65,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#111827';
+    ctx.font = `${CELL*0.9}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('+', 0, 0);
+
+    ctx.restore();
+  }
+
+  // --- Light bikes ---
+  drawLightBike(p1);
+  drawLightBike(p2);
+
+  // --- Turn sparks ---
+  drawSparks();
+
+  // --- Neon frame ---
+  ctx.restore();
+  ctx.save();
+  ctx.shadowBlur = 24;
+  ctx.shadowColor = 'rgba(41,240,255,0.75)';
+  ctx.strokeStyle = 'rgba(233,241,255,0.9)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(2,2,w-4,h-4);
+  ctx.restore();
+}
+
+// Override loop to plug in FX while using existing step() logic
+const _loop_orig = loop;
+loop = function(t){
+  if(!running) return;
+  if(!lastTime) lastTime = t;
+  let dt = t - lastTime;
+  lastTime = t;
+  if(dt>250) dt = 250;
+  acc += dt;
+  const dtSec = dt / 1000;
+
+  while(acc >= tickMs){
+    step();
+    acc -= tickMs;
+  }
+
+  updateTrailAges(dtSec);
+  updatePowerups(dtSec);
+  updateSparks(dtSec);
+  updateReplay(dtSec);
+
+  draw();
+  requestAnimationFrame(loop);
+};
+
     fit(); updateFitLabel();
   })();
   </script>
