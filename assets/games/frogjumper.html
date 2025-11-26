@@ -34,7 +34,7 @@ const gridGap = 10;
 const GOAL_SLOTS = 5;
 
 let currentLevel = 0;
-const levelCount = 3;
+const levelCount = 10; // now 10 levels total
 
 // movement cooldown to make jumps snappy
 let canMove = true;
@@ -68,7 +68,7 @@ const sounds = {
   gameOver: new Audio("gameover.wav")
 };
 
-// Background music (looped)
+// Background music (looped, subtle track)
 const bgMusic = new Audio("bgmusic.wav");
 bgMusic.loop = true;
 bgMusic.volume = 0.4; // softer than SFX
@@ -120,18 +120,18 @@ function updateBestScore() {
 
 // --------- COLOR PALETTES PER LEVEL ---------
 
-// Logs palette per level
+// Logs palette per level (we'll cycle through with modulo)
 const logPalettes = [
-  { base: "#8b5a2b", mid: "#b57939", dark: "#5c3b1b" },   // Level 1
-  { base: "#5b3c1a", mid: "#a86b3f", dark: "#3d2610" },   // Level 2
-  { base: "#3f2b18", mid: "#916237", dark: "#26160b" }    // Level 3
+  { base: "#8b5a2b", mid: "#b57939", dark: "#5c3b1b" },   // Palette A
+  { base: "#5b3c1a", mid: "#a86b3f", dark: "#3d2610" },   // Palette B
+  { base: "#3f2b18", mid: "#916237", dark: "#26160b" }    // Palette C
 ];
 
-// Vehicles palette per level
+// Vehicles palette per level (also cycles)
 const vehiclePalettes = [
-  { car: "#c2c4da", truck: "#b3b7ff", bulldozer: "#f1c40f" }, // Level 1
-  { car: "#ff9f43", truck: "#54a0ff", bulldozer: "#feca57" }, // Level 2
-  { car: "#ff6b81", truck: "#5f27cd", bulldozer: "#ff9f43" }  // Level 3
+  { car: "#c2c4da", truck: "#b3b7ff", bulldozer: "#f1c40f" }, // Palette A
+  { car: "#ff9f43", truck: "#54a0ff", bulldozer: "#feca57" }, // Palette B
+  { car: "#ff6b81", truck: "#5f27cd", bulldozer: "#ff9f43" }  // Palette C
 ];
 
 // --------- BASIC SPRITE "CLASS" ---------
@@ -214,7 +214,8 @@ function drawFrog(s) {
 }
 
 function drawLog(s) {
-  const palette = logPalettes[currentLevel] || logPalettes[0];
+  const palIndex = currentLevel % logPalettes.length;
+  const palette = logPalettes[palIndex];
   const cellX = s.x;
   const cellY = s.y;
   const y = cellY + gridGap / 2 + 6;
@@ -255,7 +256,9 @@ function drawVehicle(s) {
   const h = grid - gridGap - 16;
   const w = s.size;
 
-  const vp = vehiclePalettes[currentLevel] || vehiclePalettes[0];
+  const palIndex = currentLevel % vehiclePalettes.length;
+  const vp = vehiclePalettes[palIndex];
+
   let bodyColor;
   if (s.type === "truck") {
     bodyColor = vp.truck;
@@ -307,7 +310,7 @@ const frogger = new Sprite({
 
 const scoredFroggers = [];
 
-// Level patterns
+// Base pattern sets (we'll reuse & speed-scale for all 10 levels)
 const levelPatterns = [
   [
     null,
@@ -356,13 +359,23 @@ const levelPatterns = [
   ]
 ];
 
-let patterns = levelPatterns[currentLevel];
+// Get pattern set for a given level (cycle through the 3 bases)
+function getPatternsForLevel(levelIndex) {
+  const idx = levelIndex % levelPatterns.length;
+  return levelPatterns[idx];
+}
+
+let patterns = getPatternsForLevel(currentLevel);
 const rows = [];
 let levelMessageTimer = 0;
 
 // --------- BUILD ROWS FROM PATTERNS ---------
 function buildRowsFromPatterns() {
   rows.length = 0;
+
+  // Difficulty multiplier grows with level: 1.0, 1.2, ... up to ~2.8
+  const difficultyMultiplier = 1 + currentLevel * 0.2;
+
   for (let i = 0; i < patterns.length; i++) {
     rows[i] = [];
     const pat = patterns[i];
@@ -382,12 +395,16 @@ function buildRowsFromPatterns() {
     endX += totalPatternWidth;
 
     while (x < endX) {
+      const baseSpeed = pat.speed;
+      const scaledSpeed = baseSpeed * difficultyMultiplier;
+
       rows[i].push(
         new Sprite({
           x,
           y: grid * (i + 1),
           index: idx,
-          ...pat
+          ...pat,
+          speed: scaledSpeed  // override with scaled speed
         })
       );
       x += pat.size + pat.spacing[idx] * grid;
@@ -414,7 +431,7 @@ function resetFrog() {
 
 function resetGameToStart() {
   currentLevel = 0;
-  patterns = levelPatterns[currentLevel];
+  patterns = getPatternsForLevel(currentLevel);
   scoredFroggers.length = 0;
   lives = 3;
   gameOver = false;
@@ -428,8 +445,15 @@ function resetGameToStart() {
 
 function advanceLevel() {
   playSound("levelUp");
-  currentLevel = (currentLevel + 1) % levelCount;
-  patterns = levelPatterns[currentLevel];
+
+  // move to next level until 10, then stay at 10 but keep looping patterns / bonuses
+  if (currentLevel < levelCount - 1) {
+    currentLevel++;
+  } else {
+    currentLevel = levelCount - 1; // stay at max difficulty
+  }
+
+  patterns = getPatternsForLevel(currentLevel);
   scoredFroggers.length = 0;
   buildRowsFromPatterns();
 
@@ -698,7 +722,8 @@ function loop() {
   context.textAlign = "center";
   const controlText =
     "Arrows move  |  M: SFX " + (soundEnabled ? "ON" : "OFF") +
-    "  |  B: Music " + (musicEnabled ? "ON" : "OFF");
+    "  |  B: Music " + (musicEnabled ? "ON" : "OFF") +
+    "  |  Level " + (currentLevel + 1) + "/10";
   context.fillText(
     controlText,
     canvas.width / 2,
@@ -716,8 +741,7 @@ function loop() {
 
   context.textAlign = "right";
   context.fillText(
-    "Lvl: " + (currentLevel + 1) +
-    "   Score: " + score,
+    "Score: " + score,
     canvas.width - 10,
     40
   );
