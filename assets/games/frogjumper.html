@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Arcade-Style Frogger – Clean HUD</title>
+  <title>Frog Jumper Arcade</title>
   <meta charset="UTF-8" />
-  <!-- Mobile-friendly scaling -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
     html, body {
       height: 100%;
@@ -13,113 +11,19 @@
     body {
       background: #000;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: monospace;
-      touch-action: none; /* prevent scroll during taps/swipes */
     }
     canvas {
       border: 4px solid #333;
       background: #000;
       image-rendering: pixelated;
-      /* Scale nicely on phones while keeping internal resolution */
-      width: min(100vw - 24px, 624px);
-      height: auto;
-      max-height: 70vh;
-    }
-
-    /* Mobile touch controls */
-    #touch-controls {
-      margin-top: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      user-select: none;
-    }
-
-    #touch-controls-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    #touch-controls button {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: 2px solid #ffffff;
-      background: rgba(0, 0, 0, 0.7);
-      color: #ffffff;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #touch-controls button:active {
-      transform: scale(0.95);
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    /* Extra buttons: Restart + Back to KidCode */
-    #meta-buttons {
-      margin-top: 10px;
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    #meta-buttons button {
-      min-width: 120px;
-      padding: 10px 16px;
-      border-radius: 999px;
-      border: 2px solid #ffffff;
-      background: rgba(0, 0, 0, 0.8);
-      color: #ffffff;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #meta-buttons button:active {
-      transform: scale(0.97);
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    /* Slightly smaller controls on very small screens */
-    @media (max-width: 480px) {
-      #touch-controls button {
-        width: 56px;
-        height: 56px;
-        font-size: 24px;
-      }
-      #meta-buttons button {
-        min-width: 110px;
-        font-size: 13px;
-        padding: 8px 12px;
-      }
     }
   </style>
 </head>
 <body>
 <canvas id="game" width="624" height="720"></canvas>
-
-<!-- On-screen mobile controls -->
-<div id="touch-controls">
-  <button id="btn-up">▲</button>
-  <div id="touch-controls-row">
-    <button id="btn-left">◀</button>
-    <button id="btn-down">▼</button>
-    <button id="btn-right">▶</button>
-  </div>
-</div>
-
-<!-- Extra controls: Restart + Back -->
-<div id="meta-buttons">
-  <button id="btn-restart">🔁 Restart</button>
-  <button id="btn-home">🏠 Back to KidCode</button>
-</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -148,6 +52,50 @@ let score = 0;
 let bestScore = 0;
 let levelStartTime = Date.now();
 let lastLevelBonusText = "";
+
+// --------- SOUND SETUP (SFX + MUSIC) ---------
+let soundEnabled = true;   // SFX
+let musicEnabled = true;   // background music
+let musicInitialized = false; // start music only after first keypress
+
+// Sound effects (place wav files in same folder)
+const sounds = {
+  hop: new Audio("hop.wav"),
+  splash: new Audio("splash.wav"),
+  hit: new Audio("hit.wav"),
+  home: new Audio("home.wav"),
+  levelUp: new Audio("levelup.wav"),
+  gameOver: new Audio("gameover.wav")
+};
+
+// Background music (looped)
+const bgMusic = new Audio("bgmusic.wav");
+bgMusic.loop = true;
+bgMusic.volume = 0.4; // softer than SFX
+
+function playSound(name) {
+  if (!soundEnabled) return;
+  const s = sounds[name];
+  if (!s) return;
+  try {
+    s.currentTime = 0;
+    s.play();
+  } catch (e) {
+    // ignore play errors (e.g., autoplay restrictions)
+  }
+}
+
+function updateMusic() {
+  if (!musicEnabled) {
+    bgMusic.pause();
+    return;
+  }
+  try {
+    bgMusic.play();
+  } catch (e) {
+    // ignore errors; user may have to press another key to satisfy autoplay rules
+  }
+}
 
 // try to load best score from localStorage (if available)
 try {
@@ -336,7 +284,7 @@ function drawVehicle(s) {
     drawPixelRect(bladeX, y + 6, 4, h - 4, accent);
   } else {
     const bumpX = s.speed > 0 ? cellX + w - 4 : cellX;
-    drawPixelRect(bumpX, y + 10, 4, 10, accent);
+    drawPixelRect(bumpX, y + 10, 4, h - 10, accent);
   }
 
   const headY = y + 10;
@@ -479,6 +427,7 @@ function resetGameToStart() {
 }
 
 function advanceLevel() {
+  playSound("levelUp");
   currentLevel = (currentLevel + 1) % levelCount;
   patterns = levelPatterns[currentLevel];
   scoredFroggers.length = 0;
@@ -499,12 +448,21 @@ function advanceLevel() {
   levelMessageTimer = 120;
 }
 
-function loseLife() {
+function loseLife(cause) {
   if (gameOver) return;
+
+  // choose sound based on cause
+  if (cause === "water") {
+    playSound("splash");
+  } else if (cause === "car") {
+    playSound("hit");
+  }
+
   lives--;
   if (lives <= 0) {
     lives = 0;
     gameOver = true;
+    playSound("gameOver");
     resetFrog();
   } else {
     resetFrog();
@@ -660,15 +618,17 @@ function loop() {
           collision = true;
 
           if (froggerRow > rows.length / 2) {
-            loseLife();
+            loseLife("car");
           } else {
+            // safe on log/turtle
             frogger.speed = s.speed;
           }
         }
       }
 
+      // in water rows but not on log/turtle
       if (!collision && froggerRow > 0 && froggerRow <= 5) {
-        loseLife();
+        loseLife("water");
       }
     }
 
@@ -708,6 +668,8 @@ function loop() {
           })
         );
 
+        // sound + score for reaching home
+        playSound("home");
         score += 100;  // score for each home reached
         updateBestScore();
 
@@ -722,25 +684,28 @@ function loop() {
     }
   }
 
-  // --------- CLEAN HUD WITH NO OVERLAP ---------
+  // --------- CLEAN HUD ---------
   const elapsedSec = ((Date.now() - levelStartTime) / 1000) | 0;
 
   // HUD background only top row (doesn't cover homes)
   context.fillStyle = "rgba(0,0,0,0.9)";
-  context.fillRect(0, 0, canvas.width, grid); // 0–48px
+  context.fillRect(0, 0, canvas.width, grid);
 
   context.fillStyle = "#ffffff";
   context.font = "16px monospace";
 
-  // Row 1: Center only (shorter text to avoid width overlap)
+  // Row 1: Center only
   context.textAlign = "center";
+  const controlText =
+    "Arrows move  |  M: SFX " + (soundEnabled ? "ON" : "OFF") +
+    "  |  B: Music " + (musicEnabled ? "ON" : "OFF");
   context.fillText(
-    "Arrow keys or buttons to move",
+    controlText,
     canvas.width / 2,
     20
   );
 
-  // Row 2: Left and right only
+  // Row 2: Left and right
   context.textAlign = "left";
   context.fillText(
     "Homes: " + scoredFroggers.length + "/" + GOAL_SLOTS +
@@ -757,7 +722,7 @@ function loop() {
     40
   );
 
-  // Row 3: right side only (tucked just above homes)
+  // Row 3: right side only
   context.textAlign = "right";
   context.fillText(
     "Best: " + bestScore +
@@ -795,9 +760,9 @@ function loop() {
     }
   }
 
-  // GAME OVER OVERLAY (green + pink glow)
+  // GAME OVER OVERLAY
   if (gameOver) {
-    const t = Date.now() / 400; // animation speed
+    const t = Date.now() / 400;
     const green = Math.floor(160 + 95 * Math.sin(t));
     const pink = Math.floor(160 + 95 * Math.sin(t + Math.PI));
 
@@ -828,7 +793,7 @@ function loop() {
       canvas.height / 2 + 30
     );
     context.fillText(
-      "Press Enter or tap Restart",
+      "Press Enter to restart",
       canvas.width / 2,
       canvas.height / 2 + 60
     );
@@ -841,22 +806,49 @@ function loop() {
   );
 }
 
-// --------- MOVEMENT HELPER (desktop + mobile) ---------
-function tryMove(direction) {
-  if (gameOver || !canMove) return;
+// --------- INPUT (movement + SFX/Music + restart) ---------
+document.addEventListener("keydown", (e) => {
+  // On first keypress, try starting music (for autoplay policies)
+  if (!musicInitialized) {
+    musicInitialized = true;
+    updateMusic();
+  }
+
+  // Restart on Enter if GAME OVER
+  if (gameOver) {
+    if (e.key === "Enter") {
+      resetGameToStart();
+    }
+    return;
+  }
+
+  // Toggle SFX with M
+  if (e.key === "m" || e.key === "M") {
+    soundEnabled = !soundEnabled;
+    return;
+  }
+
+  // Toggle music with B
+  if (e.key === "b" || e.key === "B") {
+    musicEnabled = !musicEnabled;
+    updateMusic();
+    return;
+  }
+
+  if (!canMove) return;
 
   let moved = false;
 
-  if (direction === "left") {
+  if (e.key === "ArrowLeft") {
     frogger.x -= grid;
     moved = true;
-  } else if (direction === "right") {
+  } else if (e.key === "ArrowRight") {
     frogger.x += grid;
     moved = true;
-  } else if (direction === "up") {
+  } else if (e.key === "ArrowUp") {
     frogger.y -= grid;
     moved = true;
-  } else if (direction === "down") {
+  } else if (e.key === "ArrowDown") {
     frogger.y += grid;
     moved = true;
   }
@@ -870,76 +862,15 @@ function tryMove(direction) {
 
     frogger.hopTimer = HOP_FRAMES;
 
+    // play hop sound
+    playSound("hop");
+
     canMove = false;
     setTimeout(() => {
       canMove = true;
     }, MOVE_COOLDOWN);
   }
-}
-
-// --------- INPUT (keyboard) ---------
-document.addEventListener("keydown", (e) => {
-  // Restart on Enter if GAME OVER
-  if (gameOver) {
-    if (e.key === "Enter") {
-      resetGameToStart();
-    }
-    return;
-  }
-
-  if (e.key === "ArrowLeft") {
-    tryMove("left");
-  } else if (e.key === "ArrowRight") {
-    tryMove("right");
-  } else if (e.key === "ArrowUp") {
-    tryMove("up");
-  } else if (e.key === "ArrowDown") {
-    tryMove("down");
-  }
 });
-
-// --------- INPUT (mobile touch controls) ---------
-function bindButton(id, direction) {
-  const btn = document.getElementById(id);
-  if (!btn) return;
-
-  const handlePress = (ev) => {
-    ev.preventDefault();
-    tryMove(direction);
-  };
-
-  btn.addEventListener("mousedown", handlePress);
-  btn.addEventListener("touchstart", handlePress, { passive: false });
-}
-
-bindButton("btn-up", "up");
-bindButton("btn-down", "down");
-bindButton("btn-left", "left");
-bindButton("btn-right", "right");
-
-// --- Restart button (mobile + desktop click) ---
-const btnRestart = document.getElementById("btn-restart");
-if (btnRestart) {
-  const handleRestart = (ev) => {
-    ev.preventDefault();
-    resetGameToStart();
-  };
-  btnRestart.addEventListener("click", handleRestart);
-  btnRestart.addEventListener("touchstart", handleRestart, { passive: false });
-}
-
-// --- Back to KidCode button ---
-const btnHome = document.getElementById("btn-home");
-if (btnHome) {
-  const handleHome = (ev) => {
-    ev.preventDefault();
-    // assuming this file lives in assets/games/frogjumper.html
-    // this goes back to the main KidCode index
-    window.location.href = "../../index.html";
-  };
-  btnHome.addEventListener("click", handleHome);
-  btnHome.addEventListener("touchstart", handleHome, { passive: false });
-}
 
 // --------- START ---------
 levelMessageTimer = 120;
