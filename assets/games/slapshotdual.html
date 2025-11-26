@@ -70,7 +70,7 @@
       min-height:74px;
       border-radius:14px;
       border:none;
-      font-size:20px;
+      font-size:26px;
       font-weight:700;
       background:rgba(255,255,255,0.92);
       color:#0b1220;
@@ -84,6 +84,14 @@
     /* Show touch controls on smaller screens */
     @media (max-width: 900px){
       .touchControls{display:flex;}
+
+      /* Only hide bottom controls on mobile while playing; keep score visible */
+      body.mobile-playing .controls{
+        display:none;
+      }
+      body.mobile-playing .touchControls{
+        bottom:16px;
+      }
     }
   </style>
 </head>
@@ -94,7 +102,7 @@
       <span class="badge">Hockey Pong</span>
       <span id="rightScore">0</span>
     </div>
-    <div class="score"><span id="status">Press Space to Start</span></div>
+    <div class="score"><span id="status">Press Space or Start to Play</span></div>
   </div>
 
   <div class="wrap">
@@ -104,23 +112,24 @@
   <!-- TOUCH CONTROLS FOR MOBILE -->
   <div class="touchControls" aria-hidden="false">
     <div class="touchCol">
-      <button class="touchBtn" id="btnLeftUp">L ▲</button>
-      <button class="touchBtn" id="btnLeftDown">L ▼</button>
+      <button class="touchBtn" id="btnLeftUp">▲</button>
+      <button class="touchBtn" id="btnLeftDown">▼</button>
     </div>
     <div class="touchCol">
-      <button class="touchBtn" id="btnRightUp">R ▲</button>
-      <button class="touchBtn" id="btnRightDown">R ▼</button>
+      <button class="touchBtn" id="btnRightUp">▲</button>
+      <button class="touchBtn" id="btnRightDown">▼</button>
     </div>
   </div>
 
   <div class="controls">
     <span>Left: <kbd>W</kbd>/<kbd>S</kbd></span>
     <span>Right: <kbd>↑</kbd>/<kbd>↓</kbd></span>
-    <span>Pause/Start: <kbd>Space</kbd></span>
+    <span>Start/Pause: <kbd>Space</kbd></span>
     <span>Reset round: <kbd>R</kbd></span>
     <span>New game: <kbd>N</kbd></span>
     <button id="btnBack">Back to KidCode Games</button>
     <button id="btnMode">Mode: 2P</button>
+    <button id="btnStart">Start</button>
     <button id="btnPause">Pause</button>
     <button id="btnNew">New Game</button>
   </div>
@@ -136,6 +145,7 @@
     const btnNew = document.getElementById('btnNew');
     const btnMode = document.getElementById('btnMode');
     const btnBack = document.getElementById('btnBack');
+    const btnStart = document.getElementById('btnStart');
 
     // Back to KidCode Games
     btnBack.addEventListener('click', () => {
@@ -170,7 +180,23 @@
       canvas.style.width = w+'px';
       canvas.style.height = h+'px';
     }
-    addEventListener('resize', fitCanvas); fitCanvas();
+    addEventListener('resize', ()=>{
+      fitCanvas();
+      updateMobilePlayingFlag();
+    });
+    fitCanvas();
+
+    function isMobile(){
+      return window.innerWidth <= 900;
+    }
+
+    function updateMobilePlayingFlag(){
+      if(isMobile() && running && !gameOver){
+        document.body.classList.add('mobile-playing');
+      } else {
+        document.body.classList.remove('mobile-playing');
+      }
+    }
 
     // Game constants
     const RINK = { x: 40, y: 40, w: canvas.width-80, h: canvas.height-80, r: 48 };
@@ -200,8 +226,10 @@
       leftScoreEl.textContent = '0'; rightScoreEl.textContent = '0';
       gameOver=false; serveDir = Math.random()<.5? -1: 1; newPuck(serveDir);
       status.textContent = singlePlayer
-        ? 'Single Player: You (Left) vs AI (Right). Press Space to Start'
-        : 'Press Space to Start';
+        ? 'Single Player: You (Left) vs AI (Right). Press Space or Start'
+        : 'Press Space or Start to Play';
+      running = false;
+      updateMobilePlayingFlag();
     }
 
     function rand(a,b){return a + Math.random()*(b-a)}
@@ -213,23 +241,32 @@
       keys.add(e.code);
       if(e.code==='Space') togglePause();
       if(e.code==='KeyR') { pointOver(); }
-      if(e.code==='KeyN') { newGame(); running=false; }
+      if(e.code==='KeyN') { newGame(); }
     });
     addEventListener('keyup', e=> keys.delete(e.code));
 
     btnPause.addEventListener('click', togglePause);
-    btnNew.addEventListener('click', ()=>{ newGame(); running=false; });
+    btnNew.addEventListener('click', ()=>{ newGame(); });
+
+    // Start button (great for mobile)
+    btnStart.addEventListener('click', ()=>{
+      if(gameOver){
+        newGame();
+      }
+      running = true;
+      status.textContent = singlePlayer ? 'Playing vs AI…' : 'Playing…';
+      updateMobilePlayingFlag();
+    });
 
     // Mode toggle button
     btnMode.addEventListener('click', ()=>{
       singlePlayer = !singlePlayer;
       btnMode.textContent = singlePlayer ? 'Mode: 1P (vs AI)' : 'Mode: 2P';
       status.textContent = singlePlayer
-        ? 'Single Player: You (Left) vs AI (Right). Press Space to Start'
-        : 'Press Space to Start';
+        ? 'Single Player: You (Left) vs AI (Right). Press Space or Start'
+        : 'Press Space or Start to Play';
       // Reset round so AI + serving direction feel fair
       newGame();
-      running = false;
     });
 
     function togglePause(){
@@ -238,6 +275,7 @@
       status.textContent = running
         ? (singlePlayer ? 'Playing vs AI…' : 'Playing…')
         : 'Paused';
+      updateMobilePlayingFlag();
     }
 
     // Bind touch & mouse for mobile paddle buttons
@@ -465,17 +503,22 @@
         const who = (player===leftPaddle)
           ? (singlePlayer ? 'You win!' : 'Left wins!')
           : (singlePlayer ? 'AI wins!' : 'Right wins!');
-        status.textContent = who + ' Press N for New Game';
-        running=false; gameOver=true; return;
+        status.textContent = who + ' Press N or Start for New Game';
+        running=false; gameOver=true;
+        updateMobilePlayingFlag();
+        return;
       }
       // next serve towards conceding side
       serveDir = (player===leftPaddle)? 1 : -1; // send toward the player who was scored on
       pointOver();
     }
 
-    function pointOver(){ newPuck(serveDir); status.textContent = running
-      ? (singlePlayer ? 'Playing vs AI…' : 'Playing…')
-      : (singlePlayer ? 'Single Player: Press Space to Resume' : 'Paused'); }
+    function pointOver(){
+      newPuck(serveDir);
+      status.textContent = running
+        ? (singlePlayer ? 'Playing vs AI…' : 'Playing…')
+        : (singlePlayer ? 'Single Player: Press Space or Start' : 'Paused');
+    }
 
     // Audio (WebAudio minimal)
     const AudioCtx = window.AudioContext || window.webkitAudioContext; let audio;
