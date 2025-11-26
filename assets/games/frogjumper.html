@@ -20,10 +20,60 @@
       background: #000;
       image-rendering: pixelated;
     }
+
+    /* ===== MOBILE CONTROLS ===== */
+    #mobileControls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none; /* Only show on phones/tablets */
+      z-index: 999;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .mc-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .mc-btn {
+      background: rgba(255,255,255,0.25);
+      border: 2px solid #fff;
+      color: #fff;
+      font-size: 32px;
+      padding: 18px 24px;
+      border-radius: 14px;
+      margin: 6px;
+      width: 72px;
+      height: 72px;
+      backdrop-filter: blur(5px);
+    }
+
+    .mc-btn:active {
+      background: rgba(255,255,255,0.45);
+    }
+
+    /* Show controls only when screen width is small */
+    @media only screen and (max-width: 900px) {
+      #mobileControls { display: block; }
+    }
   </style>
 </head>
 <body>
 <canvas id="game" width="624" height="720"></canvas>
+
+<!-- MOBILE CONTROLS -->
+<div id="mobileControls">
+  <button class="mc-btn" id="btnUp">▲</button>
+  <div class="mc-row">
+    <button class="mc-btn" id="btnLeft">◀</button>
+    <button class="mc-btn" id="btnDown">▼</button>
+    <button class="mc-btn" id="btnRight">▶</button>
+  </div>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
@@ -34,7 +84,7 @@ const gridGap = 10;
 const GOAL_SLOTS = 5;
 
 let currentLevel = 0;
-const levelCount = 10; // now 10 levels total
+const levelCount = 10; // 10 levels total
 
 // movement cooldown to make jumps snappy
 let canMove = true;
@@ -68,7 +118,7 @@ const sounds = {
   gameOver: new Audio("gameover.wav")
 };
 
-// Background music (looped, subtle track)
+// Background music (looped) – MAKE SURE you have bgmusic.wav
 const bgMusic = new Audio("bgmusic.wav");
 bgMusic.loop = true;
 bgMusic.volume = 0.4; // softer than SFX
@@ -895,6 +945,35 @@ document.addEventListener("keydown", (e) => {
     }, MOVE_COOLDOWN);
   }
 });
+
+// ===== MOBILE BUTTON HANDLERS =====
+function mobileMove(direction) {
+  const event = new KeyboardEvent("keydown", { key: direction });
+  document.dispatchEvent(event);
+}
+
+const btnUp = document.getElementById("btnUp");
+const btnDown = document.getElementById("btnDown");
+const btnLeft = document.getElementById("btnLeft");
+const btnRight = document.getElementById("btnRight");
+
+function addMobileListener(btn, key) {
+  if (!btn) return;
+  btn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    mobileMove(key);
+  }, { passive: false });
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    mobileMove(key);
+  });
+}
+
+addMobileListener(btnUp, "ArrowUp");
+addMobileListener(btnDown, "ArrowDown");
+addMobileListener(btnLeft, "ArrowLeft");
+addMobileListener(btnRight, "ArrowRight");
 
 // --------- START ---------
 levelMessageTimer = 120;
