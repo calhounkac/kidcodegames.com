@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hockey Rink Pong — 2 Player</title>
+  <title>Hockey Rink Pong — 2 Player / Single Player</title>
   <style>
     :root{
       --bg: #0b1220;
@@ -47,6 +47,44 @@
       background:#ffffff; color:#0b1220; box-shadow:0 6px 16px rgba(0,0,0,.25);
     }
     button:active{transform:translateY(1px)}
+
+    /* TOUCH CONTROLS (for mobile) */
+    .touchControls{
+      position:fixed;
+      left:16px;
+      right:16px;
+      bottom:88px; /* sit above main controls bar */
+      display:none;
+      justify-content:space-between;
+      gap:16px;
+      pointer-events:none;
+    }
+    .touchCol{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      pointer-events:auto;
+    }
+    .touchBtn{
+      min-width:74px;
+      min-height:74px;
+      border-radius:14px;
+      border:none;
+      font-size:20px;
+      font-weight:700;
+      background:rgba(255,255,255,0.92);
+      color:#0b1220;
+      box-shadow:0 6px 16px rgba(0,0,0,0.35);
+    }
+    .touchBtn:active{
+      transform:translateY(1px);
+      background:rgba(255,255,255,0.8);
+    }
+
+    /* Show touch controls on smaller screens */
+    @media (max-width: 900px){
+      .touchControls{display:flex;}
+    }
   </style>
 </head>
 <body>
@@ -58,15 +96,31 @@
     </div>
     <div class="score"><span id="status">Press Space to Start</span></div>
   </div>
+
   <div class="wrap">
     <canvas id="gameCanvas" width="1200" height="650" aria-label="Hockey Pong game area"></canvas>
   </div>
+
+  <!-- TOUCH CONTROLS FOR MOBILE -->
+  <div class="touchControls" aria-hidden="false">
+    <div class="touchCol">
+      <button class="touchBtn" id="btnLeftUp">L ▲</button>
+      <button class="touchBtn" id="btnLeftDown">L ▼</button>
+    </div>
+    <div class="touchCol">
+      <button class="touchBtn" id="btnRightUp">R ▲</button>
+      <button class="touchBtn" id="btnRightDown">R ▼</button>
+    </div>
+  </div>
+
   <div class="controls">
     <span>Left: <kbd>W</kbd>/<kbd>S</kbd></span>
     <span>Right: <kbd>↑</kbd>/<kbd>↓</kbd></span>
     <span>Pause/Start: <kbd>Space</kbd></span>
     <span>Reset round: <kbd>R</kbd></span>
     <span>New game: <kbd>N</kbd></span>
+    <button id="btnBack">Back to KidCode Games</button>
+    <button id="btnMode">Mode: 2P</button>
     <button id="btnPause">Pause</button>
     <button id="btnNew">New Game</button>
   </div>
@@ -80,12 +134,36 @@
     const rightScoreEl = document.getElementById('rightScore');
     const btnPause = document.getElementById('btnPause');
     const btnNew = document.getElementById('btnNew');
+    const btnMode = document.getElementById('btnMode');
+    const btnBack = document.getElementById('btnBack');
+
+    // Back to KidCode Games
+    btnBack.addEventListener('click', () => {
+      window.location.href = 'https://kidcodegames.com';
+    });
+
+    // TOUCH BUTTON ELEMENTS
+    const btnLeftUp   = document.getElementById('btnLeftUp');
+    const btnLeftDown = document.getElementById('btnLeftDown');
+    const btnRightUp  = document.getElementById('btnRightUp');
+    const btnRightDown= document.getElementById('btnRightDown');
+
+    // Track touch state for paddles
+    const touchState = {
+      leftUp: false,
+      leftDown: false,
+      rightUp: false,
+      rightDown: false
+    };
+
+    // GAME MODE: false = 2P, true = 1P (vs AI controlling right paddle)
+    let singlePlayer = false;
 
     // Layout / scale
     function fitCanvas(){
       const margin = 24;
       const maxW = innerWidth - margin*2;
-      const maxH = innerHeight - 140; // room for HUD/controls
+      const maxH = innerHeight - 180; // room for HUD/controls/touch
       const targetRatio = 12/6.5; // keep proportions of 1200x650 rink
       let w = maxW, h = Math.round(maxW/targetRatio);
       if(h>maxH){ h=maxH; w=Math.round(h*targetRatio); }
@@ -121,7 +199,9 @@
       leftPaddle.score = 0; rightPaddle.score = 0;
       leftScoreEl.textContent = '0'; rightScoreEl.textContent = '0';
       gameOver=false; serveDir = Math.random()<.5? -1: 1; newPuck(serveDir);
-      status.textContent = 'Press Space to Start';
+      status.textContent = singlePlayer
+        ? 'Single Player: You (Left) vs AI (Right). Press Space to Start'
+        : 'Press Space to Start';
     }
 
     function rand(a,b){return a + Math.random()*(b-a)}
@@ -138,11 +218,62 @@
     addEventListener('keyup', e=> keys.delete(e.code));
 
     btnPause.addEventListener('click', togglePause);
-    btnNew.addEventListener('click', ()=>{ newGame(); running=false; })
+    btnNew.addEventListener('click', ()=>{ newGame(); running=false; });
+
+    // Mode toggle button
+    btnMode.addEventListener('click', ()=>{
+      singlePlayer = !singlePlayer;
+      btnMode.textContent = singlePlayer ? 'Mode: 1P (vs AI)' : 'Mode: 2P';
+      status.textContent = singlePlayer
+        ? 'Single Player: You (Left) vs AI (Right). Press Space to Start'
+        : 'Press Space to Start';
+      // Reset round so AI + serving direction feel fair
+      newGame();
+      running = false;
+    });
 
     function togglePause(){
-      if(gameOver) return; running = !running; status.textContent = running? 'Playing…' : 'Paused';
+      if(gameOver) return;
+      running = !running;
+      status.textContent = running
+        ? (singlePlayer ? 'Playing vs AI…' : 'Playing…')
+        : 'Paused';
     }
+
+    // Bind touch & mouse for mobile paddle buttons
+    function bindTouchButton(btn, prop){
+      if(!btn) return;
+
+      // touch
+      btn.addEventListener('touchstart', e=>{
+        e.preventDefault();
+        touchState[prop] = true;
+      }, { passive:false });
+
+      const endTouch = e=>{
+        e.preventDefault();
+        touchState[prop] = false;
+      };
+      btn.addEventListener('touchend', endTouch, { passive:false });
+      btn.addEventListener('touchcancel', endTouch, { passive:false });
+
+      // mouse (for testing on desktop)
+      btn.addEventListener('mousedown', e=>{
+        e.preventDefault();
+        touchState[prop] = true;
+      });
+    }
+
+    // Release all touch flags on mouseup anywhere
+    addEventListener('mouseup', ()=>{
+      touchState.leftUp = touchState.leftDown = false;
+      touchState.rightUp = touchState.rightDown = false;
+    });
+
+    bindTouchButton(btnLeftUp, 'leftUp');
+    bindTouchButton(btnLeftDown, 'leftDown');
+    bindTouchButton(btnRightUp, 'rightUp');
+    bindTouchButton(btnRightDown, 'rightDown');
 
     // Draw helpers
     function roundRect(x,y,w,h,r){
@@ -237,11 +368,28 @@
     function clamp(v,a,b){return Math.max(a, Math.min(b,v))}
 
     function update(){
-      // paddles
-      leftPaddle.vy = (keys.has('KeyW')?-PADDLE_SPEED:0) + (keys.has('KeyS')?PADDLE_SPEED:0);
-      rightPaddle.vy = (keys.has('ArrowUp')?-PADDLE_SPEED:0) + (keys.has('ArrowDown')?PADDLE_SPEED:0);
+      // paddles: combine keyboard + touch states for LEFT always
+      const leftUp   = keys.has('KeyW')      || touchState.leftUp;
+      const leftDown = keys.has('KeyS')      || touchState.leftDown;
+
+      // For RIGHT:
+      //  - if 2P mode: human control (keys or touch)
+      //  - if 1P mode: AI ignores these flags
+      let rightUp   = !singlePlayer && (keys.has('ArrowUp')   || touchState.rightUp);
+      let rightDown = !singlePlayer && (keys.has('ArrowDown') || touchState.rightDown);
+
+      leftPaddle.vy  = (leftUp ? -PADDLE_SPEED : 0) + (leftDown ? PADDLE_SPEED : 0);
+
+      if (!singlePlayer) {
+        // 2P mode: normal human control
+        rightPaddle.vy = (rightUp ? -PADDLE_SPEED : 0) + (rightDown ? PADDLE_SPEED : 0);
+      } else {
+        // 1P mode: AI for right paddle
+        aiControlRightPaddle();
+      }
+
       leftPaddle.y = clamp(leftPaddle.y + leftPaddle.vy, RINK.y, RINK.y+RINK.h-PADDLE_H);
-      rightPaddle.y = clamp(rightPaddle.y + rightPaddle.vy, RINK.y, RINK.y+RINK.h-PADDLE_H);
+      rightPaddle.y= clamp(rightPaddle.y + rightPaddle.vy, RINK.y, RINK.y+RINK.h-PADDLE_H);
 
       // puck
       puck.x += puck.vx; puck.y += puck.vy;
@@ -284,6 +432,29 @@
       }
     }
 
+    // Simple AI for right paddle
+    function aiControlRightPaddle() {
+      // Only chase puck when it's moving toward the AI
+      const reactZoneX = canvas.width * 0.35; // AI reacts once puck crosses this
+      let targetY;
+
+      if (puck.vx > 0 && puck.x > reactZoneX) {
+        // Try to track puck, but not perfect
+        const lead = 20; // small lead height
+        targetY = puck.y - PADDLE_H / 2 + lead;
+      } else {
+        // Drift back toward center when puck not threatening
+        targetY = canvas.height / 2 - PADDLE_H / 2;
+      }
+
+      const diff = targetY - rightPaddle.y;
+      const maxStep = PADDLE_SPEED * 0.75; // AI speed
+      rightPaddle.vy = clamp(diff, -maxStep, maxStep);
+
+      // tiny random jitter so it doesn’t feel robotic-perfect
+      rightPaddle.vy += (Math.random() - 0.5) * 0.4;
+    }
+
     function score(player){
       if(gameOver) return;
       player.score++;
@@ -291,7 +462,10 @@
       rightScoreEl.textContent = String(rightPaddle.score);
       cheer();
       if(player.score >= MAX_SCORE){
-        status.textContent = (player===leftPaddle? 'Left':'Right') + ' wins! Press N for New Game';
+        const who = (player===leftPaddle)
+          ? (singlePlayer ? 'You win!' : 'Left wins!')
+          : (singlePlayer ? 'AI wins!' : 'Right wins!');
+        status.textContent = who + ' Press N for New Game';
         running=false; gameOver=true; return;
       }
       // next serve towards conceding side
@@ -299,7 +473,9 @@
       pointOver();
     }
 
-    function pointOver(){ newPuck(serveDir); status.textContent = running? 'Playing…' : 'Paused'; }
+    function pointOver(){ newPuck(serveDir); status.textContent = running
+      ? (singlePlayer ? 'Playing vs AI…' : 'Playing…')
+      : (singlePlayer ? 'Single Player: Press Space to Resume' : 'Paused'); }
 
     // Audio (WebAudio minimal)
     const AudioCtx = window.AudioContext || window.webkitAudioContext; let audio;
