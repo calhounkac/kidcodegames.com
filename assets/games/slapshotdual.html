@@ -129,7 +129,6 @@
     <span>New game: <kbd>N</kbd></span>
     <button id="btnBack">Back to KidCode Games</button>
     <button id="btnMode">Mode: 2P</button>
-    <!-- THIS is the mobile/desktop Start button -->
     <button id="btnStart">Start</button>
     <button id="btnPause">Pause</button>
     <button id="btnNew">New Game</button>
@@ -170,11 +169,22 @@
     // GAME MODE: false = 2P, true = 1P (vs AI controlling right paddle)
     let singlePlayer = false;
 
+    // Layout / scale (UPDATED to treat mobile landscape differently)
     function fitCanvas(){
       const margin = 24;
       const maxW = innerWidth - margin*2;
-      const maxH = innerHeight - 180;
-      const targetRatio = 12/6.5;
+
+      const isLandscape = innerWidth > innerHeight;
+      const isMobileWidth = innerWidth <= 900;
+
+      // Reserve a bit less vertical space in mobile landscape
+      let reservedVertical = 180; // default (portrait / desktop)
+      if (isMobileWidth && isLandscape) {
+        reservedVertical = 120; // more room for rink in landscape
+      }
+
+      const maxH = innerHeight - reservedVertical;
+      const targetRatio = 12/6.5; // keep proportions of 1200x650 rink
       let w = maxW, h = Math.round(maxW/targetRatio);
       if(h>maxH){ h=maxH; w=Math.round(h*targetRatio); }
       canvas.style.width = w+'px';
@@ -198,9 +208,10 @@
       }
     }
 
+    // Game constants
     const RINK = { x: 40, y: 40, w: canvas.width-80, h: canvas.height-80, r: 48 };
-    const GOAL_LINE_OFFSET = 70;
-    const BLUE_LINE_OFFSET = 200;
+    const GOAL_LINE_OFFSET = 70; // from each end
+    const BLUE_LINE_OFFSET = 200; // from center each way
 
     const PADDLE_W = 18, PADDLE_H = 110, PADDLE_RADIUS = 9, PADDLE_SPEED = 8;
     const PUCK_R = 12;
@@ -233,6 +244,7 @@
 
     function rand(a,b){return a + Math.random()*(b-a)}
 
+    // Input
     const keys = new Set();
     addEventListener('keydown', e=>{
       if(['Space','ArrowUp','ArrowDown','KeyW','KeyS','KeyR','KeyN'].includes(e.code)) e.preventDefault();
@@ -246,7 +258,7 @@
     btnPause.addEventListener('click', togglePause);
     btnNew.addEventListener('click', ()=>{ newGame(); });
 
-    // MOBILE/desktop Start button
+    // Start button (mobile/desktop)
     btnStart.addEventListener('click', ()=>{
       if(gameOver){
         newGame();
@@ -256,6 +268,7 @@
       updateMobilePlayingFlag();
     });
 
+    // Mode toggle button
     btnMode.addEventListener('click', ()=>{
       singlePlayer = !singlePlayer;
       btnMode.textContent = singlePlayer ? 'Mode: 1P (vs AI)' : 'Mode: 2P';
@@ -274,8 +287,11 @@
       updateMobilePlayingFlag();
     }
 
+    // Bind touch & mouse for mobile paddle buttons
     function bindTouchButton(btn, prop){
       if(!btn) return;
+
+      // touch
       btn.addEventListener('touchstart', e=>{
         e.preventDefault();
         touchState[prop] = true;
@@ -288,12 +304,14 @@
       btn.addEventListener('touchend', endTouch, { passive:false });
       btn.addEventListener('touchcancel', endTouch, { passive:false });
 
+      // mouse (for testing on desktop)
       btn.addEventListener('mousedown', e=>{
         e.preventDefault();
         touchState[prop] = true;
       });
     }
 
+    // Release all touch flags on mouseup anywhere
     addEventListener('mouseup', ()=>{
       touchState.leftUp = touchState.leftDown = false;
       touchState.rightUp = touchState.rightDown = false;
@@ -304,6 +322,7 @@
     bindTouchButton(btnRightUp, 'rightUp');
     bindTouchButton(btnRightDown, 'rightDown');
 
+    // Draw helpers
     function roundRect(x,y,w,h,r){
       ctx.beginPath();
       ctx.moveTo(x+r,y);
@@ -315,32 +334,38 @@
     }
 
     function drawRink(){
+      // Boards
       ctx.save();
       roundRect(RINK.x, RINK.y, RINK.w, RINK.h, RINK.r);
       ctx.clip();
+      // Ice
       ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-ice');
       ctx.fillRect(RINK.x, RINK.y, RINK.w, RINK.h);
 
+      // Center red line
       ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-red');
       ctx.lineWidth = 6;
       let cx = canvas.width/2;
       ctx.beginPath(); ctx.moveTo(cx, RINK.y); ctx.lineTo(cx, RINK.y+RINK.h); ctx.stroke();
 
+      // Blue lines
       ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-blue');
       [cx-BLUE_LINE_OFFSET, cx+BLUE_LINE_OFFSET].forEach(x=>{
         ctx.beginPath(); ctx.moveTo(x, RINK.y); ctx.lineTo(x, RINK.y+RINK.h); ctx.stroke();
       });
 
+      // Goal lines
       ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-red');
       [RINK.x+GOAL_LINE_OFFSET, RINK.x+RINK.w-GOAL_LINE_OFFSET].forEach(x=>{
         ctx.beginPath(); ctx.moveTo(x, RINK.y); ctx.lineTo(x, RINK.y+RINK.h); ctx.stroke();
       });
 
+      // Faceoff circles
       ctx.lineWidth = 3;
       ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--rink-line-red');
       const circleR = 36;
       const offsY = RINK.h/3;
-      [[cx, canvas.height/2, true],
+      [[cx, canvas.height/2, true], // center (with dot)
        [RINK.x+RINK.w*0.25, RINK.y+offsY, false],
        [RINK.x+RINK.w*0.25, RINK.y+RINK.h-offsY, false],
        [RINK.x+RINK.w*0.75, RINK.y+offsY, false],
@@ -352,6 +377,7 @@
 
       ctx.restore();
 
+      // Outer board edge
       ctx.strokeStyle = '#b9d8ea';
       ctx.lineWidth = 8;
       roundRect(RINK.x, RINK.y, RINK.w, RINK.h, RINK.r);
@@ -385,39 +411,49 @@
       ctx.restore();
     }
 
+    // Physics and update
     function clamp(v,a,b){return Math.max(a, Math.min(b,v))}
 
     function update(){
+      // paddles: combine keyboard + touch states for LEFT always
       const leftUp   = keys.has('KeyW')      || touchState.leftUp;
       const leftDown = keys.has('KeyS')      || touchState.leftDown;
 
+      // For RIGHT:
+      //  - if 2P mode: human control (keys or touch)
+      //  - if 1P mode: AI ignores these flags
       let rightUp   = !singlePlayer && (keys.has('ArrowUp')   || touchState.rightUp);
       let rightDown = !singlePlayer && (keys.has('ArrowDown') || touchState.rightDown);
 
       leftPaddle.vy  = (leftUp ? -PADDLE_SPEED : 0) + (leftDown ? PADDLE_SPEED : 0);
 
       if (!singlePlayer) {
+        // 2P mode: normal human control
         rightPaddle.vy = (rightUp ? -PADDLE_SPEED : 0) + (rightDown ? PADDLE_SPEED : 0);
       } else {
+        // 1P mode: AI for right paddle
         aiControlRightPaddle();
       }
 
       leftPaddle.y = clamp(leftPaddle.y + leftPaddle.vy, RINK.y, RINK.y+RINK.h-PADDLE_H);
       rightPaddle.y= clamp(rightPaddle.y + rightPaddle.vy, RINK.y, RINK.y+RINK.h-PADDLE_H);
 
+      // puck
       puck.x += puck.vx; puck.y += puck.vy;
 
+      // wall collisions (top/bottom within rounded boards area)
       const top = RINK.y + puck.r, bottom = RINK.y + RINK.h - puck.r;
       if(puck.y < top){ puck.y = top; puck.vy *= -1; thwack(); }
       if(puck.y > bottom){ puck.y = bottom; puck.vy *= -1; thwack(); }
 
+      // paddle collisions
       function collide(p){
         const nextX = puck.x + puck.vx;
         const withinY = (puck.y > p.y-2) && (puck.y < p.y+PADDLE_H+2);
         if(withinY){
           if(p===leftPaddle && nextX - puck.r <= p.x + PADDLE_W && puck.x >= p.x){
             puck.x = p.x + PADDLE_W + puck.r;
-            puck.vx = Math.abs(puck.vx) * 1.04;
+            puck.vx = Math.abs(puck.vx) * 1.04; // a little faster
             const rel = (puck.y - (p.y + PADDLE_H/2)) / (PADDLE_H/2);
             puck.vy = clamp(puck.vy + rel*4.2, -7.5, 7.5);
             thwack();
@@ -433,27 +469,36 @@
       }
       collide(leftPaddle); collide(rightPaddle);
 
+      // goals
       if(puck.x < RINK.x - 10){
+        // right scores
         score(rightPaddle);
       } else if(puck.x > RINK.x + RINK.w + 10){
+        // left scores
         score(leftPaddle);
       }
     }
 
+    // Simple AI for right paddle
     function aiControlRightPaddle() {
-      const reactZoneX = canvas.width * 0.35;
+      // Only chase puck when it's moving toward the AI
+      const reactZoneX = canvas.width * 0.35; // AI reacts once puck crosses this
       let targetY;
 
       if (puck.vx > 0 && puck.x > reactZoneX) {
-        const lead = 20;
+        // Try to track puck, but not perfect
+        const lead = 20; // small lead height
         targetY = puck.y - PADDLE_H / 2 + lead;
       } else {
+        // Drift back toward center when puck not threatening
         targetY = canvas.height / 2 - PADDLE_H / 2;
       }
 
       const diff = targetY - rightPaddle.y;
-      const maxStep = PADDLE_SPEED * 0.75;
+      const maxStep = PADDLE_SPEED * 0.75; // AI speed
       rightPaddle.vy = clamp(diff, -maxStep, maxStep);
+
+      // tiny random jitter so it doesn’t feel robotic-perfect
       rightPaddle.vy += (Math.random() - 0.5) * 0.4;
     }
 
@@ -472,7 +517,8 @@
         updateMobilePlayingFlag();
         return;
       }
-      serveDir = (player===leftPaddle)? 1 : -1;
+      // next serve towards conceding side
+      serveDir = (player===leftPaddle)? 1 : -1; // send toward the player who was scored on
       pointOver();
     }
 
@@ -483,6 +529,7 @@
         : (singlePlayer ? 'Single Player: Press Space or Start' : 'Paused');
     }
 
+    // Audio (WebAudio minimal)
     const AudioCtx = window.AudioContext || window.webkitAudioContext; let audio;
     function ping(freq, dur=0.05, type='square', gain=.08){
       if(!audio){ try{ audio = new AudioCtx(); }catch(e){ return; } }
@@ -508,6 +555,7 @@
       requestAnimationFrame(loop);
     }
 
+    // Init
     newGame(); newPuck(serveDir); render(); requestAnimationFrame(loop);
   })();
   </script>
