@@ -69,10 +69,19 @@
     }
     canvas {
       display: block;
-      margin: 70px auto 0 auto;
+      margin: 40px auto 0 auto;
       background: #020617;
       border: 2px solid #38bdf8;
       box-shadow: 0 0 40px rgba(56,189,248,.4);
+    }
+
+    /* On phones, make the game screen fill most of the width */
+    @media (max-width: 900px) {
+      canvas {
+        width: 100vw;
+        height: auto;
+        margin-top: 10px;
+      }
     }
 
     #retryBtn {
@@ -219,48 +228,65 @@
   <button id="retryBtn">Retry Mission</button>
   <canvas id="game" width="900" height="600"></canvas>
 
+
 <div id="mobileControls">
-  <div class="mob-row">
-    <button class="mobBtn mobUp" id="mobUp">▲</button>
-  </div>
-  <div class="mob-row">
-    <button class="mobBtn mobSide" id="mobLeft">◀</button>
-    <button class="mobBtn mobDown" id="mobDown">▼</button>
-    <button class="mobBtn mobSide" id="mobRight">▶</button>
+  <div id="joystickBase">
+    <div id="joystickKnob"></div>
   </div>
 </div>
 <style>
   #mobileControls {
     position: fixed;
-    bottom: 18px;
-    left: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    bottom: 24px;
+    left: 24px;
     z-index: 30;
   }
-  #mobileControls .mob-row {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-  }
-  .mobBtn {
-    width: 72px;
-    height: 72px;
+  #joystickBase {
+    position: relative;
     border-radius: 50%;
-    font-size: 26px;
-    background: rgba(15,23,42,0.95);
-    color: #e5e7eb;
-    border: 2px solid #38bdf8;
-    box-shadow: 0 10px 24px rgba(15,23,42,0.8);
+    background: radial-gradient(circle at 30% 30%, rgba(148,163,184,0.35), rgba(15,23,42,0.95));
+    border: 2px solid rgba(148,163,184,0.7);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.85);
     touch-action: none;
   }
-  .mobBtn:active {
-    transform: translateY(2px);
-    box-shadow: 0 4px 14px rgba(15,23,42,0.9);
-    background: rgba(30,64,175,1);
+  #joystickKnob {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #38bdf8, #1d4ed8);
+    box-shadow: 0 8px 20px rgba(8,47,73,0.9);
+    touch-action: none;
+  }
+
+  /* Desktop: smaller joystick */
+  #joystickBase {
+    width: 120px;
+    height: 120px;
+  }
+  #joystickKnob {
+    width: 60px;
+    height: 60px;
+  }
+
+  /* Phones: larger joystick for thumbs */
+  @media (max-width: 900px) {
+    #joystickBase {
+      width: 170px;
+      height: 170px;
+    }
+    #joystickKnob {
+      width: 90px;
+      height: 90px;
+    }
+    #mobileControls {
+      bottom: 30px;
+      left: 30px;
+    }
   }
 </style>
+
 
 
 
@@ -1640,35 +1666,89 @@
     requestAnimationFrame(loop);
   
 
-    // Mobile D-pad: thumb movement, tap screen to shoot
-    const mobLeft = document.getElementById('mobLeft');
-    const mobRight = document.getElementById('mobRight');
-    const mobUp = document.getElementById('mobUp');
-    const mobDown = document.getElementById('mobDown');
+    
+    // Mobile joystick: thumb movement, tap screen to shoot
+    const joystickBase = document.getElementById('joystickBase');
+    const joystickKnob = document.getElementById('joystickKnob');
 
-    function bindMobButton(btn, keyName) {
-      if (!btn) return;
-      btn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        keys[keyName] = true;
-      });
-      btn.addEventListener('pointerup', (e) => {
-        e.preventDefault();
-        keys[keyName] = false;
-      });
-      btn.addEventListener('pointerleave', () => {
-        keys[keyName] = false;
-      });
-      btn.addEventListener('pointercancel', () => {
-        keys[keyName] = false;
-      });
+    let joyActive = false;
+    let joyPointerId = null;
+
+    function resetJoystick() {
+      if (!joystickKnob) return;
+      joystickKnob.style.transform = 'translate(-50%, -50%)';
+      keys['arrowleft'] = false;
+      keys['arrowright'] = false;
+      keys['arrowup'] = false;
+      keys['arrowdown'] = false;
     }
 
-    // Map to the same keys PC uses
-    bindMobButton(mobLeft, 'arrowleft');
-    bindMobButton(mobRight, 'arrowright');
-    bindMobButton(mobUp, 'arrowup');
-    bindMobButton(mobDown, 'arrowdown');
+    function handleJoystickMove(e) {
+      if (!joystickBase || !joystickKnob) return;
+      const rect = joystickBase.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const clientX = e.clientX ?? (e.touches && e.touches[0].clientX);
+      const clientY = e.clientY ?? (e.touches && e.touches[0].clientY);
+      if (clientX == null || clientY == null) return;
+
+      let dx = clientX - cx;
+      let dy = clientY - cy;
+
+      const maxRadius = rect.width * 0.35;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist > maxRadius) {
+        const scale = maxRadius / dist;
+        dx *= scale;
+        dy *= scale;
+      }
+
+      // Move knob
+      const offsetX = dx;
+      const offsetY = dy;
+      joystickKnob.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+
+      // Decide movement directions with a deadzone
+      const dead = maxRadius * 0.25;
+      keys['arrowleft'] = dx < -dead;
+      keys['arrowright'] = dx > dead;
+      keys['arrowup'] = dy < -dead;
+      keys['arrowdown'] = dy > dead;
+    }
+
+    if (joystickBase) {
+      joystickBase.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        joyActive = true;
+        joyPointerId = e.pointerId;
+        joystickBase.setPointerCapture(e.pointerId);
+        handleJoystickMove(e);
+      });
+      joystickBase.addEventListener('pointermove', (e) => {
+        if (!joyActive || e.pointerId !== joyPointerId) return;
+        e.preventDefault();
+        handleJoystickMove(e);
+      });
+      joystickBase.addEventListener('pointerup', (e) => {
+        if (e.pointerId !== joyPointerId) return;
+        e.preventDefault();
+        joyActive = false;
+        joyPointerId = null;
+        resetJoystick();
+      });
+      joystickBase.addEventListener('pointercancel', (e) => {
+        if (e.pointerId !== joyPointerId) return;
+        joyActive = false;
+        joyPointerId = null;
+        resetJoystick();
+      });
+      joystickBase.addEventListener('pointerleave', (e) => {
+        if (!joyActive || e.pointerId !== joyPointerId) return;
+        joyActive = false;
+        joyPointerId = null;
+        resetJoystick();
+      });
+    }
 
 </script>
 </body>
