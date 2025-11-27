@@ -1,109 +1,607 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2-Player Rap Battle</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1e1e1e;
-            color: #fff;
-            text-align: center;
-            padding: 20px;
-        }
-        input {
-            padding: 10px;
-            width: 60%;
-            font-size: 16px;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .score {
-            font-size: 20px;
-            margin: 10px 0;
-        }
-        .winner {
-            font-size: 24px;
-            color: #ff0;
-            margin-top: 20px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2-Player Rap Battle</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  background-color: #111827;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(249,115,22,0.32) 0, transparent 40%),
+    radial-gradient(circle at 80% 10%, rgba(56,189,248,0.28) 0, transparent 45%),
+    radial-gradient(circle at 20% 80%, rgba(244,63,94,0.28) 0, transparent 45%),
+    linear-gradient(#7f1d1d 2px, transparent 2px),
+    linear-gradient(90deg, #7f1d1d 2px, transparent 2px),
+    linear-gradient(#b91c1c 1px, transparent 1px),
+    linear-gradient(90deg, #b91c1c 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    60px 30px,
+    60px 30px,
+    60px 30px,
+    60px 30px;
+  background-position:
+    0 0,
+    0 0,
+    30px 15px,
+    0 0,
+    30px 15px;
+  animation: wallPulse 4.5s ease-in-out infinite;
+}
+
+@keyframes wallPulse {
+  0%, 100% { filter: brightness(1); }
+  40% { filter: brightness(1.08); }
+  60% { filter: brightness(0.96); }
+}
+
+.outer-container {
+  max-width: 520px;
+  width: 100%;
+}
+
+.battle-card {
+  position: relative;
+  background: radial-gradient(circle at top, rgba(15,23,42,0.95), rgba(15,23,42,0.96));
+  border-radius: 18px;
+  padding: 20px 16px 24px;
+  box-shadow:
+    0 0 0 1px rgba(15,23,42,0.9),
+    0 18px 45px rgba(0,0,0,0.85);
+  backdrop-filter: blur(6px);
+}
+
+.battle-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(249,115,22,0.16) 0, transparent 55%),
+    radial-gradient(circle at 90% 80%, rgba(56,189,248,0.14) 0, transparent 55%);
+  opacity: 0.9;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.battle-inner {
+  position: relative;
+  z-index: 1;
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f9fafb;
+  text-shadow:
+    0 0 8px rgba(248,250,252,0.8),
+    0 0 18px rgba(239,68,68,0.9);
+}
+
+.spray-tagline {
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f97316;
+  margin-bottom: 10px;
+}
+
+#round-info {
+  font-size: 0.9rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+  margin-bottom: 14px;
+}
+
+.input-row {
+  margin-bottom: 12px;
+}
+
+input[type="text"] {
+  padding: 10px 12px;
+  width: 100%;
+  max-width: 100%;
+  font-size: 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.8);
+  background: rgba(15,23,42,0.92);
+  color: #f9fafb;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(15,23,42,0.9);
+}
+
+input[type="text"]::placeholder {
+  color: #6b7280;
+}
+
+input[type="text"]:focus {
+  border-color: #22c55e;
+  box-shadow:
+    0 0 0 1px rgba(21,128,61,0.9),
+    0 0 20px rgba(34,197,94,0.45);
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+button {
+  padding: 10px 22px;
+  font-size: 15px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+}
+
+#dropBtn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #022c22;
+  box-shadow: 0 12px 25px rgba(22,163,74,0.7);
+}
+
+#dropBtn:hover:enabled {
+  background: linear-gradient(135deg, #4ade80, #22c55e);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(16,185,129,0.85);
+}
+
+#dropBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+#backBtn {
+  background: transparent;
+  color: #e5e7eb;
+  border: 1px solid rgba(148,163,184,0.7);
+  padding-inline: 18px;
+}
+
+#backBtn:hover {
+  background: rgba(15,23,42,0.9);
+  box-shadow: 0 10px 20px rgba(15,23,42,0.9);
+}
+
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.score {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(15,23,42,0.9);
+  border: 1px solid rgba(148,163,184,0.8);
+}
+
+#player1Score {
+  border-color: rgba(96,165,250,0.9);
+}
+
+#player2Score {
+  border-color: rgba(244,114,182,0.9);
+}
+
+.winner {
+  text-transform: uppercase;
+}
+
+
+.champ-mic {
+  font-size: 3rem;
+  margin-top: 10px;
+  text-shadow:
+    0 0 6px rgba(0,0,0,0.9),
+    0 0 18px rgba(248,250,252,0.9),
+    0 0 30px rgba(251,191,36,0.9);
+}
+
+.winner {
+  font-size: 1.1rem;
+  margin-top: 16px;
+  color: #facc15;
+  text-shadow:
+    0 0 10px rgba(250,204,21,0.9),
+    0 0 18px rgba(251,191,36,0.7);
+  min-height: 1.4em;
+}
+
+.helper {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+/* Floating graffiti text when scoring */
+.graffiti-float {
+  position: fixed;
+  left: 50%;
+  top: 55%;
+  transform: translate(-50%, -50%);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f97316;
+  text-shadow:
+    0 0 4px rgba(0,0,0,0.9),
+    0 0 14px rgba(249,115,22,0.9),
+    0 0 26px rgba(239,68,68,0.9);
+  opacity: 0;
+  pointer-events: none;
+  animation: graffitiPop 1.2s ease-out forwards;
+  z-index: 20;
+}
+
+@keyframes graffitiPop {
+  0%   { opacity: 0; transform: translate(-50%, -10px) scale(0.7); }
+  15%  { opacity: 1; transform: translate(-50%, -20px) scale(1.0); }
+  60%  { opacity: 1; transform: translate(-50%, -50px) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -80px) scale(1.1); }
+}
+
+@media (max-width: 480px) {
+  .battle-card {
+    padding-inline: 14px;
+  }
+  h1 {
+    font-size: 1.5rem;
+  }
+  .score-row {
+    flex-direction: column;
+  }
+}
+</style>
 </head>
 <body>
-    <h1>🎤 2-Player Rap Battle 🎤</h1>
+  <div class="outer-container">
+    <div class="battle-card">
+      <div class="battle-inner">
+        <h1>🎤 Rap Battle Arena 🎤</h1>
+        <div class="spray-tagline">Street Bars · Two Players · Three Rounds</div>
 
-    <div id="round-info">Round: 1</div>
+        <div id="round-info">Round: 1</div>
 
-    <div>
-        <input type="text" id="rapLine" placeholder="Type your rap line here...">
-        <br>
-        <button onclick="submitLine()">Drop Line</button>
+        <div class="input-row">
+          <input type="text" id="rapLine" placeholder="Type your hottest bar and drop it on the wall...">
+        </div>
+
+        <div class="btn-row">
+          <button id="startBtn" onclick="handleStartBeat()">Drop the Beat!</button>
+          <button id="dropBtn" onclick="submitLine()">Drop Line</button>
+          <button id="rematchBtn" onclick="rematchBattle()" style="display:none;">Rematch</button>
+          <button id="backBtn" onclick="window.location.href='https://kidcodegames.com';">
+            Back to KidCodeGames.com
+          </button>
+        </div>
+
+        <div class="score-row">
+          <div class="score" id="player1Score">Player 1 Score: 0</div>
+          <div class="score" id="player2Score">Player 2 Score: 0</div>
+        </div>
+
+        <div class="winner" id="winner"></div>
+        <div id="championMic" class="champ-mic" style="display:none;">🎤</div>
+        <div class="helper">
+          Player 1 and Player 2 take turns typing a line. Three rounds. Highest total score wins the wall.
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="score" id="player1Score">Player 1 Score: 0</div>
-    <div class="score" id="player2Score">Player 2 Score: 0</div>
+<script>
+// --------- core state ----------
+let player1Score = 0;
+let player2Score = 0;
+let round = 1;
+const totalRounds = 3;
+let currentPlayer = 1;
+let gameStarted = false;
 
-    <div class="winner" id="winner"></div>
+// --------- scoring ----------
+function scoreLine(line) {
+  const lengthScore = Math.min(line.split(" ").length, 10);
+  const creativity = Math.floor(Math.random() * 11); // 0-10
+  return lengthScore + creativity;
+}
 
-    <script>
-        let player1Score = 0;
-        let player2Score = 0;
-        let round = 1;
-        const totalRounds = 3;
-        let currentPlayer = 1;
+// --------- Web Audio ----------
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    audioCtx = new AC();
+  }
+  return audioCtx;
+}
 
-        function scoreLine(line) {
-            const lengthScore = Math.min(line.split(' ').length, 10);
-            const creativityScore = Math.floor(Math.random() * 11); // 0-10
-            return lengthScore + creativityScore;
-        }
+function playSpray() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const dur = 0.25;
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    const t = i / data.length;
+    data[i] = (Math.random() * 2 - 1) * (1 - t) * 0.9;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
 
-        function submitLine() {
-            const lineInput = document.getElementById("rapLine");
-            const line = lineInput.value.trim();
-            if (!line) return alert("You must type a rap line!");
+  const filter = ctx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.value = 4000;
+  filter.Q.value = 0.8;
 
-            const score = scoreLine(line);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.8, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
 
-            if (currentPlayer === 1) {
-                player1Score += score;
-                document.getElementById("player1Score").textContent = `Player 1 Score: ${player1Score}`;
-                currentPlayer = 2;
-                alert(`Player 1 scores ${score} points! Player 2's turn.`);
-            } else {
-                player2Score += score;
-                document.getElementById("player2Score").textContent = `Player 2 Score: ${player2Score}`;
-                currentPlayer = 1;
-                round++;
-                document.getElementById("round-info").textContent = `Round: ${round}`;
-                alert(`Player 2 scores ${score} points!`);
-            }
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  src.start();
+}
 
-            lineInput.value = "";
+// Simple beat with kick + hats
+let beatInterval = null;
+let beatStep = 0;
+let beatRound = 1;
 
-            if (round > totalRounds) {
-                endGame();
-            }
-        }
+function updateBeatForRound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  // restart beat with new tempo / feel for current round
+  if (beatInterval) {
+    clearInterval(beatInterval);
+    beatInterval = null;
+  }
+  beatStep = 0;
+  beatRound = round;
 
-        function endGame() {
-            const winnerDiv = document.getElementById("winner");
-            if (player1Score > player2Score) {
-                winnerDiv.textContent = "🏆 Player 1 wins the rap battle! 🏆";
-            } else if (player2Score > player1Score) {
-                winnerDiv.textContent = "🏆 Player 2 wins the rap battle! 🏆";
-            } else {
-                winnerDiv.textContent = "🤝 It's a tie! Both players are fire! 🔥";
-            }
+  // slower groove in round 1, medium in round 2, fastest in round 3+
+  let intervalMs;
+  if (beatRound === 1) {
+    intervalMs = 420;
+  } else if (beatRound === 2) {
+    intervalMs = 320;
+  } else {
+    intervalMs = 260;
+  }
 
-            document.querySelector("button").disabled = true;
-            document.getElementById("rapLine").disabled = true;
-        }
-    </script>
+  beatInterval = setInterval(() => {
+    // 4-step pattern, but hats get busier on later rounds
+    if (beatStep % 4 === 0) {
+      playKick();
+    }
+    if (beatStep % 4 === 2) {
+      playHat();
+    }
+    if (beatRound >= 2 && beatStep % 4 === 1) {
+      // extra off-beat hats from round 2 on
+      playHat();
+    }
+    beatStep++;
+  }, intervalMs);
+}
+
+function playKick() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(150, ctx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.22);
+  g.gain.setValueAtTime(0.9, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.22);
+  o.connect(g);
+  g.connect(ctx.destination);
+  o.start();
+  o.stop(ctx.currentTime + 0.25);
+}
+
+function playHat() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const dur = 0.08;
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "highpass";
+  filter.frequency.value = 5000;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.4, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+  src.connect(filter);
+  filter.connect(g);
+  g.connect(ctx.destination);
+  src.start();
+}
+
+function startBeat() {
+  if (beatInterval) return;
+  updateBeatForRound();
+}
+
+function stopBeat() {
+  if (beatInterval) {
+    clearInterval(beatInterval);
+    beatInterval = null;
+  }
+}
+
+// --------- speech announcer ----------
+function say(text) {
+  if (!("speechSynthesis" in window)) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.0;
+  utter.pitch = 1.0;
+  utter.volume = 0.9;
+  window.speechSynthesis.speak(utter);
+}
+
+function announcePlayer(num) {
+  if (num === 1) say("Player One");
+  else if (num === 2) say("Player Two");
+}
+
+
+// --------- controls / flow ----------
+function handleStartBeat() {
+  // user pressed "Drop the Beat!"
+  if (!gameStarted) {
+    // wake audio and start round 1 beat
+    const ctx = getAudioCtx();
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume();
+    }
+    startBeat();
+    gameStarted = true;
+  } else {
+    // allow restarting beat flavor for current round if needed
+    updateBeatForRound();
+  }
+}
+
+function resetBattleState() {
+  player1Score = 0;
+  player2Score = 0;
+  round = 1;
+  currentPlayer = 1;
+  gameStarted = false;
+  document.getElementById("player1Score").textContent = "Player 1 Score: 0";
+  document.getElementById("player2Score").textContent = "Player 2 Score: 0";
+  document.getElementById("round-info").textContent = "Round: 1";
+  document.getElementById("winner").textContent = "";
+  document.getElementById("championMic").style.display = "none";
+  document.getElementById("rapLine").disabled = false;
+  document.getElementById("dropBtn").disabled = false;
+  document.getElementById("rapLine").value = "";
+  const rematchBtn = document.getElementById("rematchBtn");
+  if (rematchBtn) rematchBtn.style.display = "none";
+}
+
+function rematchBattle() {
+  stopBeat();
+  resetBattleState();
+}
+
+// --------- graffiti float ----------
+function spawnGraffiti(text, playerNum) {
+  const div = document.createElement("div");
+  div.className = "graffiti-float";
+  if (playerNum === 2) {
+    div.style.color = "#22c55e";
+    div.style.textShadow =
+      "0 0 4px rgba(0,0,0,0.9),0 0 14px rgba(34,197,94,0.9),0 0 26px rgba(16,185,129,0.9)";
+  }
+  div.textContent = text;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 1250);
+}
+
+// --------- main game logic ----------
+function submitLine() {
+  const inp = document.getElementById("rapLine");
+  const line = inp.value.trim();
+  if (!line) {
+    alert("Drop a line first!");
+    return;
+  }
+
+  // Audio: spray, but beat should already be running from "Drop the Beat!"
+  getAudioCtx();
+  playSpray();
+
+  const score = scoreLine(line);
+
+  if (currentPlayer === 1) {
+    player1Score += score;
+    document.getElementById("player1Score").textContent =
+      "Player 1 Score: " + player1Score;
+    currentPlayer = 2;
+    announcePlayer(2);
+    spawnGraffiti("P1 +" + score, 1);
+    alert("Player 1 scores " + score + "! Player 2’s turn.");
+  } else {
+    player2Score += score;
+    document.getElementById("player2Score").textContent =
+      "Player 2 Score: " + player2Score;
+    currentPlayer = 1;
+    round++;
+    document.getElementById("round-info").textContent = "Round: " + round;
+    announcePlayer(1);
+    updateBeatForRound();
+    spawnGraffiti("P2 +" + score, 2);
+    alert("Player 2 scores " + score + "!");
+  }
+
+  inp.value = "";
+
+  if (round > totalRounds) {
+    endGame();
+  }
+}
+
+function endGame() {
+  const w = document.getElementById("winner");
+  const mic = document.getElementById("championMic");
+  const rematchBtn = document.getElementById("rematchBtn");
+
+  if (player1Score > player2Score) {
+    w.textContent = "RAP CHAMPION! Player 1";
+    if (mic) mic.style.display = "block";
+    say("Rap champion, Player One!");
+  } else if (player2Score > player1Score) {
+    w.textContent = "RAP CHAMPION! Player 2";
+    if (mic) mic.style.display = "block";
+    say("Rap champion, Player Two!");
+  } else {
+    w.textContent = "🤝 It's a tie! Rematch?";
+    if (mic) mic.style.display = "none";
+    say("It is a tie. Rematch!");
+  }
+
+  document.getElementById("dropBtn").disabled = true;
+  document.getElementById("rapLine").disabled = true;
+  if (rematchBtn) rematchBtn.style.display = "inline-block";
+  stopBeat();
+}
+</script>
 </body>
 </html>
