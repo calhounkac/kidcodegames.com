@@ -21,6 +21,16 @@
   </style>
 </head>
 <body>
+
+<a href="https://kidcodegames.com" 
+   style="position:fixed; top:10px; left:10px; 
+          background:#1e293b; color:white; 
+          padding:10px 16px; border-radius:8px;
+          font-family:Arial; font-size:14px;
+          text-decoration:none; z-index:999;">
+  ⬅ Back to KidCodeGames.com
+</a>
+
 <canvas id="game" width="700" height="900"></canvas>
 
 <script>
@@ -120,7 +130,139 @@ let cameraY = 0;
 let trackLength = 0;
 const keys = {};
 
+
 let trickPopups = [];
+
+// --- Sound system (Web Audio) ---
+let audioCtx = null;
+let windNode = null;
+let windGain = null;
+
+function getAudioCtx() {
+  if (audioCtx) return audioCtx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  audioCtx = new AC();
+  return audioCtx;
+}
+
+function playNoiseBurst(duration, {volume = 0.6, type = "wide"} = {}) {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const length = Math.floor(ctx.sampleRate * duration);
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i++) {
+    let v = (Math.random() * 2 - 1);
+    if (type === "whoosh") {
+      const t = i / length;
+      v *= (1 - t) * (0.4 + 0.6 * Math.random());
+    }
+    data[i] = v;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = type === "whoosh" ? 3000 : 1200;
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(volume, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  src.start();
+}
+
+function playJumpSound(isBig) {
+  // quick whoosh, slightly bigger for big ramps
+  const dur = isBig ? 0.5 : 0.35;
+  playNoiseBurst(dur, { volume: isBig ? 0.8 : 0.6, type: "whoosh" });
+}
+
+function playCrashSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  playNoiseBurst(0.4, { volume: 0.9 });
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.setValueAtTime(220, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.3);
+  gain.gain.setValueAtTime(0.6, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.35);
+}
+
+function playFinishSound() {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "triangle";
+  const t = ctx.currentTime;
+  osc.frequency.setValueAtTime(440, t);
+  osc.frequency.setValueAtTime(660, t + 0.18);
+  osc.frequency.setValueAtTime(880, t + 0.36);
+  gain.gain.setValueAtTime(0.7, t);
+  gain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(t + 0.65);
+}
+
+function startWind() {
+  const ctx = getAudioCtx();
+  if (!ctx || windNode) return;
+
+  const dur = 2.5;
+  const length = Math.floor(ctx.sampleRate * dur);
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i++) {
+    const t = i / length;
+    const base = (Math.random() * 2 - 1) * 0.6;
+    const slow = Math.sin(t * Math.PI * 2) * 0.3;
+    data[i] = base * (0.4 + 0.6 * Math.random()) + slow;
+  }
+
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 1600;
+
+  windGain = ctx.createGain();
+  windGain.gain.setValueAtTime(0.18, ctx.currentTime);
+
+  src.connect(filter);
+  filter.connect(windGain);
+  windGain.connect(ctx.destination);
+  src.start();
+  windNode = src;
+}
+
+function stopWind() {
+  if (windNode) {
+    try { windNode.stop(); } catch (e) {}
+    try { windNode.disconnect(); } catch (e) {}
+    windNode = null;
+  }
+  if (windGain) {
+    try { windGain.disconnect(); } catch (e) {}
+    windGain = null;
+  }
+}
 
 // Snow particles
 const snowflakes = [];
@@ -173,6 +315,7 @@ function resetGame() {
   score = 0;
   obstacles = [];
   trickPopups = [];
+  stopWind();
 }
 
 function startFromMenuIfReady() {
@@ -180,7 +323,12 @@ function startFromMenuIfReady() {
   lives = 5;
   score = 0;
   countdownFrames = 180;
+  const ctx = getAudioCtx();
+  if (ctx && ctx.state === "suspended") {
+    ctx.resume();
+  }
   startLevel();
+  startWind();
   state = "countdown";
 }
 
@@ -315,9 +463,11 @@ function generateLevel(lv) {
 
 function handleCrash() {
   if (state !== "playing") return;
+  playCrashSound();
   lives -= 1;
   if (lives <= 0) {
     state = "gameOver";
+    stopWind();
   } else {
     countdownFrames = 120;
     state = "countdown";
@@ -330,6 +480,7 @@ function handleLevelComplete() {
   state = "celebrate";
   celebrateFrames = 90;
   triggerFlipCelebration();
+  playFinishSound();
 }
 
 // Trick helpers & popups
@@ -362,6 +513,7 @@ function triggerManualJump() {
   player.flipAngle = 0;
   setTrickStyle("manual");
   addTrickPopup("360!", -10);
+  playJumpSound(false);
 }
 
 function triggerRampJump(big = false) {
@@ -381,6 +533,7 @@ function triggerRampJump(big = false) {
   }
   player.isFlipping = true;
   player.flipAngle = 0;
+  playJumpSound(!!big);
 }
 
 function triggerFlipCelebration() {
@@ -1249,6 +1402,7 @@ function gameLoop() {
       player.flipSpeed = 0;
       if (level >= MAX_LEVEL) {
         state = "champion";
+        stopWind();
       } else {
         level++;
         countdownFrames = 180;
@@ -1268,5 +1422,78 @@ function gameLoop() {
 
 gameLoop();
 </script>
+
+<div id="mobileControls" style="
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:20px;
+    z-index:999;
+">
+  <button class="mobBtn" id="mobLeft">⬅</button>
+  <button class="mobBtn" id="mobJump">⤒</button>
+  <button class="mobBtn" id="mobRight">➡</button>
+</div>
+
+<style>
+.mobBtn {
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  font-size:36px;
+  background:rgba(15,23,42,0.9);
+  color:white;
+  border:3px solid #38bdf8;
+  box-shadow:0 10px 24px rgba(0,0,0,0.7);
+}
+@media(min-width:900px){
+  #mobileControls { display:none; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #mobileControls { display: none !important; }
+}
+</style>
+
 </body>
+
+<script>
+// Mobile controls mapping
+const mobLeft = document.getElementById('mobLeft');
+const mobRight = document.getElementById('mobRight');
+const mobJump = document.getElementById('mobJump');
+
+function mobileKeyDown(key){
+    const evt = new KeyboardEvent('keydown', { key:key });
+    document.dispatchEvent(evt);
+}
+function mobileKeyUp(key){
+    const evt = new KeyboardEvent('keyup', { key:key });
+    document.dispatchEvent(evt);
+}
+
+if(mobLeft){
+ mobLeft.onmousedown = ()=>mobileKeyDown('ArrowLeft');
+ mobLeft.onmouseup = ()=>mobileKeyUp('ArrowLeft');
+ mobLeft.ontouchstart = (e)=>{e.preventDefault(); mobileKeyDown('ArrowLeft');};
+ mobLeft.ontouchend = (e)=>{e.preventDefault(); mobileKeyUp('ArrowLeft');};
+}
+
+if(mobRight){
+ mobRight.onmousedown = ()=>mobileKeyDown('ArrowRight');
+ mobRight.onmouseup = ()=>mobileKeyUp('ArrowRight');
+ mobRight.ontouchstart = (e)=>{e.preventDefault(); mobileKeyDown('ArrowRight');};
+ mobRight.ontouchend = (e)=>{e.preventDefault(); mobileKeyUp('ArrowRight');};
+}
+
+if(mobJump){
+ mobJump.onmousedown = ()=>mobileKeyDown(' ');
+ mobJump.onmouseup = ()=>mobileKeyUp(' ');
+ mobJump.ontouchstart = (e)=>{e.preventDefault(); mobileKeyDown(' ');};
+ mobJump.ontouchend = (e)=>{e.preventDefault(); mobileKeyUp(' ');};
+}
+</script>
+
 </html>
