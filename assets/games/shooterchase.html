@@ -218,21 +218,55 @@
   <button id="backBtn">Back to KidCodeGames.com</button>
   <button id="retryBtn">Retry Mission</button>
   <canvas id="game" width="900" height="600"></canvas>
-<div id="mobileControls" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:20px;z-index:30;">
-  <button class="mobBtn" id="mobLeft">←</button>
-  <button class="mobBtn" id="mobUp">↑</button>
-  <button class="mobBtn" id="mobDown">↓</button>
-  <button class="mobBtn" id="mobRight">→</button>
-  <button class="mobBtn" id="mobFire">FIRE</button>
+
+<div id="mobileControls">
+  <div class="mob-row">
+    <button class="mobBtn mobUp" id="mobUp">▲</button>
+  </div>
+  <div class="mob-row">
+    <button class="mobBtn mobSide" id="mobLeft">◀</button>
+    <button class="mobBtn mobDown" id="mobDown">▼</button>
+    <button class="mobBtn mobSide" id="mobRight">▶</button>
+  </div>
 </div>
 <style>
+  #mobileControls {
+    position: fixed;
+    bottom: 18px;
+    left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 30;
+  }
+  #mobileControls .mob-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
   .mobBtn {
-    width:60px;height:60px;border-radius:50%;
-    font-size:24px;
-    background:rgba(30,41,59,0.9);
-    color:white;border:2px solid #38bdf8;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    font-size: 26px;
+    background: rgba(15,23,42,0.95);
+    color: #e5e7eb;
+    border: 2px solid #38bdf8;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.8);
+    touch-action: none;
+  }
+  .mobBtn:active {
+    transform: translateY(2px);
+    box-shadow: 0 4px 14px rgba(15,23,42,0.9);
+    background: rgba(30,64,175,1);
+  }
+  @media (min-width: 900px) {
+    #mobileControls {
+      display: none;
+    }
   }
 </style>
+
 
 
   <script>
@@ -1610,26 +1644,36 @@
     lastEnemySpawn = performance.now();
     requestAnimationFrame(loop);
   
-// Mobile button events
-const mobLeft=document.getElementById('mobLeft');
-const mobRight=document.getElementById('mobRight');
-const mobUp=document.getElementById('mobUp');
-const mobDown=document.getElementById('mobDown');
-const mobFire=document.getElementById('mobFire');
 
-function mobPress(action){
-  if(action==='left') player.x-=20;
-  if(action==='right') player.x+=20;
-  if(action==='up') player.y-=20;
-  if(action==='down') player.y+=20;
-  if(action==='fire') fireBullet();
-}
+    // Mobile D-pad: thumb movement, tap screen to shoot
+    const mobLeft = document.getElementById('mobLeft');
+    const mobRight = document.getElementById('mobRight');
+    const mobUp = document.getElementById('mobUp');
+    const mobDown = document.getElementById('mobDown');
 
-if(mobLeft) mobLeft.onclick=()=>mobPress('left');
-if(mobRight) mobRight.onclick=()=>mobPress('right');
-if(mobUp) mobUp.onclick=()=>mobPress('up');
-if(mobDown) mobDown.onclick=()=>mobPress('down');
-if(mobFire) mobFire.onclick=()=>mobPress('fire');
+    function bindMobButton(btn, keyName) {
+      if (!btn) return;
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        keys[keyName] = true;
+      });
+      btn.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        keys[keyName] = false;
+      });
+      btn.addEventListener('pointerleave', () => {
+        keys[keyName] = false;
+      });
+      btn.addEventListener('pointercancel', () => {
+        keys[keyName] = false;
+      });
+    }
+
+    // Map to the same keys PC uses
+    bindMobButton(mobLeft, 'arrowleft');
+    bindMobButton(mobRight, 'arrowright');
+    bindMobButton(mobUp, 'arrowup');
+    bindMobButton(mobDown, 'arrowdown');
 
 </script>
 </body>
