@@ -218,6 +218,22 @@
   <button id="backBtn">Back to KidCodeGames.com</button>
   <button id="retryBtn">Retry Mission</button>
   <canvas id="game" width="900" height="600"></canvas>
+<div id="mobileControls" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:20px;z-index:30;">
+  <button class="mobBtn" id="mobLeft">←</button>
+  <button class="mobBtn" id="mobUp">↑</button>
+  <button class="mobBtn" id="mobDown">↓</button>
+  <button class="mobBtn" id="mobRight">→</button>
+  <button class="mobBtn" id="mobFire">FIRE</button>
+</div>
+<style>
+  .mobBtn {
+    width:60px;height:60px;border-radius:50%;
+    font-size:24px;
+    background:rgba(30,41,59,0.9);
+    color:white;border:2px solid #38bdf8;
+  }
+</style>
+
 
   <script>
     const canvas = document.getElementById('game');
@@ -1593,6 +1609,28 @@
     loadLeaderboard();
     lastEnemySpawn = performance.now();
     requestAnimationFrame(loop);
-  </script>
+  
+// Mobile button events
+const mobLeft=document.getElementById('mobLeft');
+const mobRight=document.getElementById('mobRight');
+const mobUp=document.getElementById('mobUp');
+const mobDown=document.getElementById('mobDown');
+const mobFire=document.getElementById('mobFire');
+
+function mobPress(action){
+  if(action==='left') player.x-=20;
+  if(action==='right') player.x+=20;
+  if(action==='up') player.y-=20;
+  if(action==='down') player.y+=20;
+  if(action==='fire') fireBullet();
+}
+
+if(mobLeft) mobLeft.onclick=()=>mobPress('left');
+if(mobRight) mobRight.onclick=()=>mobPress('right');
+if(mobUp) mobUp.onclick=()=>mobPress('up');
+if(mobDown) mobDown.onclick=()=>mobPress('down');
+if(mobFire) mobFire.onclick=()=>mobPress('fire');
+
+</script>
 </body>
 </html>
