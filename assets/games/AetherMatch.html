@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper-Aether Memory Match</title>
+    <!-- Load Tone.js for sound effects -->
+    <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+    <style>
+        /* General Setup */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        :root {
+            --color-bg-dark: #0a0a1a;
+            --color-bg-medium: #151530;
+            --color-accent-neon: #00ff88; /* Primary Neon Green */
+            --color-accent-warning: #ff3366; /* Neon Pink/Red */
+            --color-primary-blue: #3399ff; /* Secondary Blue */
+            --shadow-neon: 0 0 10px var(--color-accent-neon), 0 0 20px rgba(0, 255, 136, 0.4);
+            --shadow-warning: 0 0 10px var(--color-accent-warning);
+            --shadow-blue: 0 0 10px rgba(51, 153, 255, 0.5);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--color-bg-dark);
+            font-family: 'Orbitron', sans-serif;
+            color: #ffffff;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--color-accent-neon);
+            text-shadow: var(--shadow-neon);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+            text-align: center;
+        }
+
+        .game-container {
+            background: var(--color-bg-medium);
+            border: 2px solid var(--color-primary-blue);
+            box-shadow: var(--shadow-blue);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 95vw;
+            width: 700px; 
+            transition: width 0.3s;
+        }
+        
+        .game-container.size-4x4 { width: 450px; }
+        .game-container.size-4x5 { width: 450px; }
+        .game-container.size-6x6 { width: 700px; }
+
+
+        /* Game HUD/Info */
+        .hud {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+            font-size: 1.0rem;
+            color: var(--color-accent-neon);
+        }
+
+        .hud div {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .hud span {
+            font-weight: 700;
+            text-shadow: 0 0 5px var(--color-accent-neon);
+            display: inline-block;
+        }
+        #timer {
+            font-size: 1.3rem;
+            color: var(--color-accent-warning);
+            text-shadow: 0 0 8px var(--color-accent-warning);
+        }
+
+        /* Game Grid */
+        .memory-grid {
+            display: grid;
+            grid-gap: 8px;
+            perspective: 1000px; 
+            transition: box-shadow 0.1s ease-out; /* Added transition for Aether Flow */
+        }
+        
+        /* NEW: Aether Flow Effect */
+        .memory-grid.aether-flow {
+            box-shadow: 0 0 40px var(--color-accent-neon);
+        }
+        
+        .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-4x5 { grid-template-columns: repeat(4, 1fr); }
+        .grid-6x6 { grid-template-columns: repeat(6, 1fr); }
+
+
+        /* Card Styles */
+        .card {
+            width: 100%;
+            padding-bottom: 100%; 
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+        }
+        
+        .card:not(.flip):hover {
+            box-shadow: 0 0 15px var(--color-accent-neon); 
+        }
+
+        .card.flip {
+            transform: rotateY(180deg);
+            cursor: default;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 6px;
+            font-size: 2.2rem;
+            line-height: 1;
+            user-select: none;
+            overflow: hidden;
+        }
+        
+        .card-back {
+            background: var(--color-primary-blue); 
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(0,0,0,0) 100%);
+        }
+        .card-back::after {
+            content: '⌘';
+            position: absolute;
+            font-size: 1.8rem;
+            color: rgba(0, 0, 0, 0.2);
+            opacity: 0.8;
+            animation: rotate-icon 15s linear infinite;
+        }
+        .card-front {
+            background: var(--color-bg-medium); 
+            border: 2px solid var(--color-accent-neon);
+            transform: rotateY(180deg);
+            box-shadow: inset 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .card.match .card-front {
+            border-color: var(--color-accent-neon);
+            box-shadow: var(--shadow-neon);
+            opacity: 0.9;
+        }
+
+        /* Controls and Modals */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-button {
+            background-color: var(--color-accent-warning); 
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            box-shadow: 0 3px var(--color-accent-warning);
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .action-button.secondary {
+            background-color: var(--color-primary-blue);
+            box-shadow: 0 3px #1a6ab3;
+        }
+        .action-button.secondary:hover {
+             background-color: #5d83b5;
+             box-shadow: 0 3px #1a6ab3, var(--shadow-blue);
+        }
+        
+        .action-button:hover { 
+            background-color: #ff5c82; 
+            box-shadow: 0 3px #b32348, var(--shadow-warning);
+        }
+        .action-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px #b32348;
+        }
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--color-bg-medium);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid var(--color-accent-neon);
+            box-shadow: var(--shadow-neon);
+            text-align: center;
+            min-width: 300px;
+            max-width: 90vw;
+            animation: pop-in 0.5s forwards;
+        }
+        
+        .modal-content.warning {
+            border-color: var(--color-accent-warning);
+            box-shadow: var(--shadow-warning);
+        }
+
+        .modal-content h2 {
+            font-size: 2rem;
+            color: var(--color-accent-neon);
+            text-shadow: var(--shadow-neon);
+            margin-top: 0;
+        }
+        .modal-content p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Leaderboard Specific Styles */
+        #leaderboardModal h3 {
+            color: var(--color-primary-blue);
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        #leaderboardList {
+            list-style: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 15px 0;
+            border: 1px solid var(--color-primary-blue);
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        #leaderboardList li {
+            padding: 6px 15px;
+            border-bottom: 1px dashed rgba(51, 153, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        #leaderboardList li .rank { font-weight: bold; color: var(--color-accent-neon); width: 30px; text-align: left; text-shadow: var(--shadow-neon);}
+        #leaderboardList li .moves { color: var(--color-accent-warning); font-weight: bold; width: 60px; text-align: right;}
+        #leaderboardList li .time { color: var(--color-primary-blue); font-size: 0.85rem; width: 60px; text-align: right;}
+        #leaderboardList li.highlight { background: rgba(0, 255, 136, 0.1); border-radius: 3px;}
+        #leaderboardList li .user { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex-grow: 1; text-align: left; }
+        #leaderboardList li .user[data-current="true"] { color: var(--color-accent-neon); }
+        
+        .difficulty-options button {
+            margin: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .difficulty-options button.active {
+            background-color: var(--color-accent-neon); 
+            color: var(--color-bg-dark);
+            box-shadow: 0 3px #00a358;
+            text-shadow: none;
+        }
+        .difficulty-options button.active:hover {
+            background-color: #33ff9e; 
+        }
+
+        /* Notification Box */
+        #notificationBox {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--color-accent-neon);
+            color: var(--color-bg-dark);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(20px);
+            box-shadow: var(--shadow-neon);
+            z-index: 1001;
+            pointer-events: none;
+        }
+        #notificationBox.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hidden { display: none; }
+        
+        /* Animations */
+        @keyframes pop-in {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes rotate-icon {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .game-container {
+                width: 98vw !important; 
+                padding: 15px;
+            }
+            .memory-grid {
+                grid-gap: 5px;
+            }
+            .card-face {
+                font-size: 1.5rem;
+            }
+            .hud {
+                font-size: 0.8rem;
+            }
+            .controls {
+                flex-direction: column;
+            }
+            .action-button {
+                width: 100%;
+                font-size: 0.8rem;
+            }
+            #notificationBox {
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>HYPER-AETHER MATCH 🌐</h1>
+
+    <div id="gameContainer" class="game-container size-4x4">
+        <div class="hud">
+            <div>MOVES: <span id="moves">0</span></div>
+            <div>TIME: <span id="timer">0:00</span></div>
+            <div><span id="boardSizeDisplay">4x4</span> MATCHES: <span id="matches">0/8</span></div>
+        </div>
+        <div id="memoryGrid" class="memory-grid grid-4x4">
+            <!-- Cards will be injected here by JavaScript -->
+        </div>
+        <div class="controls">
+            <button id="restartButton" class="action-button secondary">RESTART GAME</button>
+            <button id="showMenuButton" class="action-button">DIFFICULTY / LEADERBOARD</button>
+        </div>
+    </div>
+    
+    <!-- Game Notifications -->
+    <div id="notificationBox">Notification Message</div>
+
+    <!-- Main Menu / Win Modal (Used for Start/Win/Difficulty Selection) -->
+    <div id="mainModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">SYSTEM STARTUP</h2>
+            <p id="modalMessage">Select your challenge level to begin the memory sequence.</p>
+            
+            <!-- Difficulty Selector -->
+            <div id="difficultyOptions" class="difficulty-options">
+                <button class="action-button secondary" data-size="4x4">4x4 (EASY)</button>
+                <button class="action-button secondary" data-size="4x5">4x5 (MEDIUM)</button>
+                <button class="action-button secondary" data-size="6x6">6x6 (HARD)</button>
+            </div>
+
+            <p style="margin-top: 25px;">
+                <button id="viewLeaderboardButton" class="action-button secondary">VIEW LEADERBOARD</button>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Restart Confirmation Modal -->
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content warning">
+            <h2>CONFIRM RESTART</h2>
+            <p>Are you sure you want to terminate the current session and restart?</p>
+            <div class="controls">
+                <button id="confirmRestartButton" class="action-button">RESTART NOW</button>
+                <button id="cancelRestartButton" class="action-button secondary">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>GLOBAL LEADERBOARD DATA</h2>
+            <h3 id="leaderboardDifficultyTitle">4x4 SCORES</h3>
+            
+            <div class="difficulty-options">
+                <button class="action-button secondary" data-size="4x4">4x4</button>
+                <button class="action-button secondary" data-size="4x5">4x5</button>
+                <button class="action-button secondary" data-size="6x6">6x6</button>
+            </div>
+
+            <ol id="leaderboardList">
+                <li style="text-align: center; display: block; justify-content: center;">Loading scores...</li>
+            </ol>
+            
+            <button id="closeLeaderboardButton" class="action-button">RETURN TO MENU</button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- FIREBASE AND AUTH IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, query, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+        // --- FIREBASE GLOBAL VARIABLES (Provided by Canvas Environment) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let currentUserId;
+        
+        // --- SOUND EFFECTS (Tone.js) ---
+        const matchSynth = new Tone.Synth({
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.05, release: 0.1 },
+            volume: -8
+        }).toDestination();
+        
+        const flowSynth = new Tone.PolySynth(Tone.Synth, { // NEW: Sound for Aether Flow
+            oscillator: { type: "sawtooth" },
+            envelope: { attack: 0.005, decay: 0.08, sustain: 0, release: 0.05 },
+            volume: -10
+        }).toDestination();
+        
+        const flipSynth = new Tone.MembraneSynth({
+            pitchDecay: 0.01,
+            envelope: { attack: 0.001, decay: 0.1, sustain: 0.01, release: 0.05 },
+            volume: -10
+        }).toDestination();
+        
+        const winJingle = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.05, decay: 0.2, sustain: 0, release: 0.5 },
+            volume: -5
+        }).toDestination();
+        
+        const clickSynth = new Tone.Synth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 },
+            volume: -15
+        }).toDestination();
+        
+        // --- GAME ASSETS & CONFIG ---
+        const ALL_EMOJIS = [
+            '🚀', '💡', '🧩', '👑', '👽', '🤖', '🌈', '⚡',
+            '🪐', '⭐', '🌌', '🔭', '🛰️', '🛸', '☄️', '⚛️',
+            '🔥', '💧', '🌿', '🌱', '🍎', '🍇', '🍉', '🥭',
+            '🔮', '🔑', '🔓', '⚙️', '🔗', '🔒', '💾', '💿'
+        ];
+
+        const DIFFICULTY_CONFIG = {
+            '4x4': { pairs: 8, cols: 4, name: 'Easy' },
+            '4x5': { pairs: 10, cols: 4, name: 'Medium' },
+            '6x6': { pairs: 18, cols: 6, name: 'Hard' }
+        };
+
+        const LEADERBOARD_COLLECTION = `artifacts/${appId}/public/data/memory_leaderboard`;
+
+        // --- DOM Elements ---
+        const gameContainer = document.getElementById('gameContainer');
+        const memoryGrid = document.getElementById('memoryGrid');
+        const movesDisplay = document.getElementById('moves');
+        const matchesDisplay = document.getElementById('matches');
+        const timerDisplay = document.getElementById('timer');
+        const boardSizeDisplay = document.getElementById('boardSizeDisplay');
+        
+        const mainModal = document.getElementById('mainModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const difficultyOptions = document.getElementById('difficultyOptions');
+        
+        const leaderboardModal = document.getElementById('leaderboardModal');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const leaderboardDifficultyTitle = document.getElementById('leaderboardDifficultyTitle');
+        
+        const confirmModal = document.getElementById('confirmModal');
+        
+        const leaderboardDifficultyButtons = document.querySelectorAll('#leaderboardModal .difficulty-options button');
+        const mainModalDifficultyButtons = document.querySelectorAll('#difficultyOptions button');
+        const actionButtons = document.querySelectorAll('.action-button');
+        
+        const notificationBox = document.getElementById('notificationBox');
+        
+        // --- GAME STATE ---
+        let gameState = {
+            currentSize: '4x4',
+            cards: [],
+            hasFlippedCard: false,
+            lockBoard: false,
+            firstCard: null,
+            secondCard: null,
+            timerInterval: null,
+            startTime: null,
+            moves: 0,
+            matches: 0,
+            timeSeconds: 0,
+            gameActive: false,
+            consecutiveMatches: 0 // NEW: Streak counter
+        };
+
+        // --- UTILITY FUNCTIONS ---
+        
+        function showNotification(message, duration = 2000) {
+            notificationBox.textContent = message;
+            notificationBox.classList.add('show');
+            setTimeout(() => {
+                notificationBox.classList.remove('show');
+            }, duration);
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // --- FIREBASE / LEADERBOARD FUNCTIONS ---
+        async function initFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase config is missing.");
+                return;
+            }
+
+            try {
+                setLogLevel('Debug');
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUserId = auth.currentUser?.uid || 'anonymous-' + crypto.randomUUID().substring(0, 8);
+                console.log("Firebase initialized. User ID:", currentUserId);
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        }
+        
+        async function saveScoreToLeaderboard(moves, timeSeconds, boardSize) {
+            if (!db) return;
+            
+            try {
+                const leaderboardRef = collection(db, LEADERBOARD_COLLECTION);
+                
+                // Add score (best scores will be retrieved via sorting later)
+                await setDoc(doc(leaderboardRef), { 
+                    moves: moves, 
+                    timeSeconds: timeSeconds,
+                    userId: currentUserId,
+                    boardSize: boardSize,
+                    date: Date.now() 
+                });
+                showNotification("Score saved to Hyper-Aether Log!", 3000);
+            } catch (e) {
+                console.error("Error saving score to leaderboard:", e);
+                showNotification("Error saving score.", 3000);
+            }
+        }
+
+        async function loadLeaderboard(boardSize) {
+            if (!db) return;
+            
+            leaderboardList.innerHTML = `<li style="text-align: center; display: block; justify-content: center; color: var(--color-primary-blue);">ACCESSING LOGS...</li>`;
+            
+            // Disable buttons during loading and set active state
+            leaderboardDifficultyButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.remove('active');
+                if (btn.dataset.size === boardSize) {
+                    btn.classList.add('active');
+                }
+            });
+
+            try {
+                // Fetch ALL relevant scores to sort them efficiently locally
+                // We fetch the 100 most recent entries to ensure a decent sample for sorting
+                const q = query(
+                    collection(db, LEADERBOARD_COLLECTION),
+                    orderBy("date", "desc"),
+                    limit(100)
+                );
+                
+                const querySnapshot = await getDocs(q);
+                const allScores = [];
+                
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    allScores.push(data);
+                });
+                
+                // Filter and sort locally (Moves ASC, then Time ASC)
+                let filteredScores = allScores.filter(s => s.boardSize === boardSize);
+                
+                filteredScores.sort((a, b) => {
+                    if (a.moves !== b.moves) {
+                        return a.moves - b.moves; 
+                    }
+                    return a.timeSeconds - b.timeSeconds; 
+                });
+
+                const topScores = filteredScores.slice(0, 10);
+                
+                displayLeaderboard(topScores, boardSize);
+
+            } catch (e) {
+                console.error("Error loading leaderboard:", e);
+                leaderboardList.innerHTML = '<li style="color: var(--color-accent-warning); text-align: center; display: block; justify-content: center;">ERROR: FAILED TO RETRIEVE LOGS.</li>';
+            } finally {
+                // Re-enable buttons after loading
+                leaderboardDifficultyButtons.forEach(btn => btn.disabled = false);
+            }
+        }
+        
+        function displayLeaderboard(scores, boardSize) {
+            leaderboardDifficultyTitle.textContent = `${boardSize} SCORES`;
+            
+            if (scores.length === 0) {
+                leaderboardList.innerHTML = `<li style="text-align: center; display: block; justify-content: center; color: var(--color-accent-neon);">No ${boardSize} data points available.</li>`;
+                return;
+            }
+
+            let html = '';
+            
+            scores.forEach((s, index) => {
+                const rank = index + 1;
+                const displayUserId = s.userId.substring(0, 8) + '...'; 
+                const isCurrentUser = s.userId === currentUserId;
+                const highlightClass = isCurrentUser ? 'highlight' : '';
+
+                html += `<li class="${highlightClass}">`;
+                html += `<span class="rank">${rank}.</span>`;
+                html += `<span class="user" data-current="${isCurrentUser}" title="User ID: ${s.userId}">${displayUserId}</span>`;
+                html += `<span class="moves">${s.moves} MOVES</span>`;
+                html += `<span class="time">${formatTime(s.timeSeconds)}</span>`;
+                html += `</li>`;
+            });
+            
+            leaderboardList.innerHTML = html;
+        }
+
+
+        // --- GAME LOGIC ---
+
+        function setupBoard(size) {
+            gameState.currentSize = size;
+            const config = DIFFICULTY_CONFIG[size];
+            const numPairs = config.pairs;
+            
+            // 1. Prepare Emojis
+            // Ensure we have enough unique emojis for the hardest level (18 pairs = 36 cards)
+            if (numPairs > ALL_EMOJIS.length) {
+                console.error("Not enough unique emojis defined for this board size!");
+                return;
+            }
+            const selectedEmojis = ALL_EMOJIS.slice(0, numPairs);
+            gameState.cards = [...selectedEmojis, ...selectedEmojis];
+            shuffle(gameState.cards);
+
+            // 2. Set Grid & Container classes
+            gameContainer.className = `game-container size-${size.replace('x', 'x')}`;
+            memoryGrid.className = `memory-grid grid-${size.replace('x', 'x')}`;
+
+            // 3. Render Cards
+            memoryGrid.innerHTML = '';
+            gameState.cards.forEach((emoji, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.emoji = emoji;
+                card.dataset.index = index;
+
+                card.innerHTML = `
+                    <div class="card-face card-front">${emoji}</div>
+                    <div class="card-face card-back"></div>
+                `;
+
+                card.addEventListener('click', flipCard);
+                memoryGrid.appendChild(card);
+            });
+            
+            // 4. Update HUD
+            boardSizeDisplay.textContent = `${size} `;
+            matchesDisplay.textContent = `0/${numPairs}`;
+        }
+        
+        function showCardsBriefly(duration = 3000) {
+            const allCards = document.querySelectorAll('.card');
+            
+            gameState.lockBoard = true; 
+            
+            allCards.forEach(card => card.classList.add('flip'));
+            
+            winJingle.triggerAttackRelease(['C4', 'G4'], '8n'); 
+            showNotification(`Memorization sequence initiated...`, duration);
+
+            setTimeout(() => {
+                allCards.forEach(card => card.classList.remove('flip'));
+                setTimeout(() => {
+                    gameState.lockBoard = false;
+                    gameState.gameActive = true;
+                    showNotification("GO! Memory sequence unlocked.", 1500);
+                }, 300); 
+            }, duration);
+        }
+
+        function flipCard() {
+            if (Tone.context.state !== 'running') { Tone.start(); }
+            if (gameState.lockBoard || !gameState.gameActive || this.classList.contains('flip')) return;
+
+            flipSynth.triggerAttackRelease('C4', '16n');
+
+            this.classList.add('flip');
+
+            if (!gameState.hasFlippedCard) {
+                // First card flipped
+                gameState.hasFlippedCard = true;
+                gameState.firstCard = this;
+                
+                if (gameState.moves === 0 && gameState.matches === 0) {
+                    startTimer(); 
+                }
+                return;
+            }
+
+            // Second card flipped
+            gameState.secondCard = this;
+            gameState.moves++;
+            movesDisplay.textContent = gameState.moves;
+
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            const isMatch = gameState.firstCard.dataset.emoji === gameState.secondCard.dataset.emoji;
+
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            matchSynth.triggerAttackRelease('E5', '8n');
+            
+            gameState.consecutiveMatches++; // INCREMENT STREAK
+            
+            if (gameState.consecutiveMatches >= 2) {
+                // Trigger Aether Flow visual effect
+                flowSynth.triggerAttackRelease(['C6', 'G5'], '16n');
+                memoryGrid.classList.add('aether-flow');
+                setTimeout(() => memoryGrid.classList.remove('aether-flow'), 150);
+                showNotification(`AETHER FLOW x${gameState.consecutiveMatches} STREAK!`, 1000);
+            } else {
+                showNotification(`MATCH FOUND: ${gameState.firstCard.dataset.emoji}`, 1000);
+            }
+            
+            gameState.firstCard.removeEventListener('click', flipCard);
+            gameState.secondCard.removeEventListener('click', flipCard);
+            
+            gameState.firstCard.classList.add('match');
+            gameState.secondCard.classList.add('match');
+
+            gameState.matches++;
+            matchesDisplay.textContent = `${gameState.matches}/${DIFFICULTY_CONFIG[gameState.currentSize].pairs}`;
+
+            resetBoard();
+            
+            if (gameState.matches === DIFFICULTY_CONFIG[gameState.currentSize].pairs) {
+                setTimeout(winGame, 600);
+            }
+        }
+
+        function unflipCards() {
+            gameState.lockBoard = true; 
+            gameState.consecutiveMatches = 0; // RESET STREAK
+            
+            setTimeout(() => {
+                flipSynth.triggerAttackRelease('G3', '16n'); 
+                showNotification("Mismatch. Sequence reset.", 500);
+                gameState.firstCard.classList.remove('flip');
+                gameState.secondCard.classList.remove('flip');
+                resetBoard();
+            }, 1000); 
+        }
+
+        function resetBoard() {
+            [gameState.hasFlippedCard, gameState.lockBoard] = [false, false];
+            [gameState.firstCard, gameState.secondCard] = [null, null];
+        }
+        
+        // --- GAME FLOW ---
+        
+        function startTimer() {
+            gameState.startTime = Date.now();
+            gameState.timeSeconds = 0;
+            
+            stopTimer(); 
+            
+            gameState.timerInterval = setInterval(() => { 
+                const elapsedSeconds = Math.floor((Date.now() - gameState.startTime) / 1000);
+                gameState.timeSeconds = elapsedSeconds;
+                timerDisplay.textContent = formatTime(gameState.timeSeconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+            }
+        }
+        
+        function winGame() {
+            stopTimer();
+            gameState.gameActive = false;
+            winJingle.triggerAttackRelease(['C5', 'E5', 'G5', 'C6'], '4n'); 
+            
+            const totalTime = timerDisplay.textContent;
+            
+            modalTitle.textContent = "MEMORY CONQUERED!";
+            modalMessage.innerHTML = `
+                <p>Aether Grid **${gameState.currentSize}** breached in **${gameState.moves} moves**.</p>
+                <p style="font-size: 1.5rem; color: var(--color-accent-neon); margin: 15px 0; text-shadow: var(--shadow-neon);">
+                    FINAL TIME: <strong>${totalTime}</strong>
+                </p>
+                <p>Transmitting data to Global Log...</p>
+                <button id="startNewGameButton" class="action-button" data-size="${gameState.currentSize}">PLAY AGAIN (${gameState.currentSize})</button>
+            `;
+            
+            saveScoreToLeaderboard(gameState.moves, gameState.timeSeconds, gameState.currentSize);
+
+            difficultyOptions.style.display = 'flex';
+            const startNewGameButton = document.getElementById('startNewGameButton');
+            if(startNewGameButton) startNewGameButton.style.display = 'block';
+            mainModal.style.display = 'flex';
+        }
+
+        function startNewGame(size) {
+            // Reset state variables
+            gameState.moves = 0;
+            gameState.matches = 0;
+            gameState.consecutiveMatches = 0;
+            movesDisplay.textContent = gameState.moves;
+            matchesDisplay.textContent = `0/${DIFFICULTY_CONFIG[size].pairs}`;
+            gameState.gameActive = false;
+            
+            // Highlight active difficulty button
+            mainModalDifficultyButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`#difficultyOptions button[data-size="${size}"]`).classList.add('active');
+            
+            stopTimer();
+            timerDisplay.textContent = '0:00';
+
+            // Rebuild the board
+            setupBoard(size);
+            
+            mainModal.style.display = 'none';
+            confirmModal.style.display = 'none';
+
+            // Show cards briefly for memorization
+            showCardsBriefly(3000); 
+        }
+        
+        function showMenu() {
+            clickSynth.triggerAttackRelease('A4', '32n');
+            modalTitle.textContent = "AETHER MATCH V4.0";
+            modalMessage.textContent = "Select your challenge level or view the global log.";
+            difficultyOptions.style.display = 'flex';
+            
+            // Ensure the button for the current size is highlighted when menu opens
+            mainModalDifficultyButtons.forEach(btn => btn.classList.remove('active'));
+            const currentSizeBtn = document.querySelector(`#difficultyOptions button[data-size="${gameState.currentSize}"]`);
+            if (currentSizeBtn) currentSizeBtn.classList.add('active');
+
+            const startNewGameButton = document.getElementById('startNewGameButton');
+            if(startNewGameButton) startNewGameButton.style.display = 'none';
+            mainModal.style.display = 'flex';
+        }
+
+        // --- EVENT LISTENERS ---
+        
+        // Universal click sound for all action buttons
+        actionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (Tone.context.state !== 'running') { Tone.start(); }
+                if (!button.disabled) {
+                    clickSynth.triggerAttackRelease('D5', '64n');
+                }
+            });
+        });
+        
+        // Restart button (opens confirmation modal)
+        document.getElementById('restartButton').addEventListener('click', () => {
+            if (gameState.gameActive) {
+                confirmModal.style.display = 'flex';
+            } else {
+                 // If not active (e.g., just started but before first flip), restart immediately
+                startNewGame(gameState.currentSize);
+            }
+        });
+        
+        // Confirmation Modal Logic
+        document.getElementById('confirmRestartButton').addEventListener('click', () => {
+            showNotification("Restarting session...", 2000);
+            startNewGame(gameState.currentSize);
+        });
+
+        document.getElementById('cancelRestartButton').addEventListener('click', () => {
+            confirmModal.style.display = 'none';
+            showNotification("Restart aborted.", 1500);
+        });
+        
+        // Menu button inside the game container
+        document.getElementById('showMenuButton').addEventListener('click', showMenu);
+        
+        // Delegation for difficulty selection in Main Modal
+        difficultyOptions.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' && e.target.dataset.size) {
+                startNewGame(e.target.dataset.size);
+            }
+        });
+        
+        // Delegation for Play Again button (replaces difficulty selector after win)
+        mainModal.addEventListener('click', (e) => {
+             if (e.target.id === 'startNewGameButton' && e.target.dataset.size) {
+                startNewGame(e.target.dataset.size);
+            }
+        });
+
+        // View Leaderboard button (in Main Modal)
+        document.getElementById('viewLeaderboardButton').addEventListener('click', () => {
+            mainModal.style.display = 'none';
+            leaderboardModal.style.display = 'flex';
+            // Start loading current game size scores by default
+            loadLeaderboard(gameState.currentSize);
+        });
+
+        // Close Leaderboard button
+        document.getElementById('closeLeaderboardButton').addEventListener('click', () => {
+            leaderboardModal.style.display = 'none';
+            showMenu(); // Return to the main menu
+        });
+
+        // Delegation for difficulty selection in Leaderboard Modal
+        leaderboardDifficultyButtons.forEach(button => { 
+            button.addEventListener('click', (e) => {
+                const size = e.target.dataset.size;
+                loadLeaderboard(size);
+            });
+        });
+
+        // --- INITIALIZATION ---
+        initFirebase().then(() => {
+            setupBoard(gameState.currentSize);
+            showMenu(); // Show the initial menu/difficulty selector
+        });
+
+    </script>
+
+</body>
+</html>
