@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Digestive Quest: Journey Through the Body</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #1e293b;
+            margin: 0;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        h1, h2, h3, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .organ-glow {
+            filter: drop-shadow(0 0 8px rgba(244, 63, 94, 0.8));
+            transition: all 0.4s ease;
+        }
+
+        .organ-inactive {
+            opacity: 0.45;
+            transition: all 0.4s ease;
+        }
+
+        .organ-done {
+            opacity: 0.9;
+            filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.35); }
+        }
+
+        .tracker-dot {
+            transform-origin: center;
+            transform-box: fill-box;
+            animation: pulse-dot 1.2s infinite ease-in-out;
+        }
+
+        @keyframes chomp {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(0.88) rotate(-6deg); }
+        }
+
+        .chomp-anim {
+            animation: chomp 0.25s ease;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Header -->
+    <header class="bg-white/90 backdrop-blur border-b border-sky-200 px-4 py-3 shadow-sm sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500 to-orange-400 flex items-center justify-center text-white text-xl shadow">
+                    🍎
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-800 leading-tight">Digestive Quest</h1>
+                    <p class="text-xs text-slate-500 font-semibold">Middle School Science Adventure</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 sm:gap-5">
+                <div class="bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-sky-600">Stage</span>
+                    <span id="hud-stage" class="font-display font-bold text-slate-800 text-sm sm:text-base">Start</span>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Points</span>
+                    <span id="hud-score" class="font-display font-bold text-amber-700 text-sm sm:text-base">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+
+        <!-- Left Sidebar: Side-Profile Human Body Map -->
+        <section class="lg:col-span-4 bg-white rounded-3xl shadow-md border border-sky-100 p-4 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-lg font-bold text-slate-800">Body Side-View Map</h2>
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700">Live Tracker</span>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">Watch your food travel down the digestive tract!</p>
+            </div>
+
+            <!-- Side Profile SVG Diagram -->
+            <div class="relative w-full max-w-[270px] mx-auto my-auto bg-gradient-to-b from-sky-50 to-indigo-50/60 rounded-2xl p-2 border border-sky-100">
+                <svg id="body-svg" viewBox="0 0 260 440" class="w-full h-auto">
+                    <defs>
+                        <linearGradient id="skinGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#fde68a" stop-opacity="0.45"/>
+                            <stop offset="100%" stop-color="#fed7aa" stop-opacity="0.55"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Human Side Profile Silhouette (Facing Left) -->
+                    <path d="M 115,22 
+                             C 145,22 168,42 168,72 
+                             C 168,92 158,108 152,120 
+                             L 155,140 
+                             C 185,150 202,180 200,235 
+                             L 196,315 
+                             L 188,425 
+                             L 122,425 
+                             L 118,320 
+                             C 102,315 92,292 94,255 
+                             C 95,215 98,175 104,142 
+                             L 106,122 
+                             C 94,122 86,118 86,110 
+                             C 86,105 92,103 92,100 
+                             C 92,97 84,96 84,91 
+                             C 84,86 92,82 90,78 
+                             C 85,75 74,73 75,67 
+                             C 76,61 88,54 92,45 
+                             C 96,30 104,22 115,22 Z" 
+                          fill="url(#skinGrad)" stroke="#cbd5e1" stroke-width="3" stroke-linejoin="round"/>
+
+                    <!-- Eye & Ear subtle details -->
+                    <circle cx="96" cy="56" r="3" fill="#94a3b8"/>
+                    <path d="M 136,58 C 142,58 144,70 137,72" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+
+                    <!-- 1. MOUTH (Oral Cavity) -->
+                    <g id="svg-mouth" class="organ-inactive">
+                        <path d="M 86,91 Q 108,88 122,95 Q 112,104 87,100 Z" fill="#fb7185" stroke="#e11d48" stroke-width="2"/>
+                        <text x="16" y="96" font-size="11" font-weight="800" fill="#be123c" font-family="Nunito">1. Mouth</text>
+                        <line x1="65" y1="93" x2="84" y2="94" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="2,2"/>
+                    </g>
+
+                    <!-- 2. ESOPHAGUS -->
+                    <g id="svg-esophagus" class="organ-inactive">
+                        <path d="M 122,96 Q 134,115 135,155 L 136,202" fill="none" stroke="#f97316" stroke-width="9" stroke-linecap="round"/>
+                        <path d="M 122,96 Q 134,115 135,155 L 136,202" fill="none" stroke="#fed7aa" stroke-width="3" stroke-linecap="round" stroke-dasharray="4,4"/>
+                        <text x="152" y="155" font-size="11" font-weight="800" fill="#c2410c" font-family="Nunito">2. Esophagus</text>
+                        <line x1="139" y1="152" x2="150" y2="152" stroke="#f97316" stroke-width="1.5"/>
+                    </g>
+
+                    <!-- 3. STOMACH -->
+                    <g id="svg-stomach" class="organ-inactive">
+                        <path d="M 134,198 
+                                 C 155,195 168,215 162,236 
+                                 C 156,254 126,256 116,242 
+                                 C 108,230 118,212 134,198 Z" 
+                              fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+                        <text x="14" y="232" font-size="11" font-weight="800" fill="#a16207" font-family="Nunito">3. Stomach</text>
+                        <line x1="76" y1="229" x2="113" y2="232" stroke="#eab308" stroke-width="1.5"/>
+                    </g>
+
+                    <!-- 5. LARGE INTESTINE (Drawn behind/around Small Intestine) -->
+                    <g id="svg-large" class="organ-inactive">
+                        <path d="M 116,315 
+                                 L 114,268 
+                                 C 114,258 168,258 168,268 
+                                 L 168,312 
+                                 C 168,324 142,324 142,338 
+                                 L 142,350" 
+                              fill="none" stroke="#8b5cf6" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M 116,315 L 114,268 C 114,258 168,258 168,268 L 168,312 C 168,324 142,324 142,338 L 142,350" 
+                              fill="none" stroke="#c4b5fd" stroke-width="4" stroke-linecap="round" stroke-dasharray="3,7"/>
+                        <text x="174" y="294" font-size="11" font-weight="800" fill="#6d28d9" font-family="Nunito">5. Large</text>
+                        <text x="174" y="306" font-size="11" font-weight="800" fill="#6d28d9" font-family="Nunito">Intestine</text>
+                    </g>
+
+                    <!-- 4. SMALL INTESTINE -->
+                    <g id="svg-small" class="organ-inactive">
+                        <path d="M 126,272 
+                                 C 156,270 156,282 126,282 
+                                 C 118,282 118,293 154,293 
+                                 C 160,293 160,304 124,304 
+                                 C 118,304 118,313 150,313" 
+                              fill="none" stroke="#ec4899" stroke-width="8" stroke-linecap="round"/>
+                        <text x="10" y="296" font-size="11" font-weight="800" fill="#be185d" font-family="Nunito">4. Small</text>
+                        <text x="10" y="308" font-size="11" font-weight="800" fill="#be185d" font-family="Nunito">Intestine</text>
+                        <line x1="62" y1="298" x2="117" y2="295" stroke="#ec4899" stroke-width="1.5"/>
+                    </g>
+
+                    <!-- Moving Food Tracker Dot -->
+                    <circle id="food-marker" cx="102" cy="95" r="7" fill="#10b981" stroke="#ffffff" stroke-width="2.5" class="tracker-dot" style="display:none;"/>
+                </svg>
+            </div>
+
+            <!-- Science Fact Box -->
+            <div class="mt-3 bg-sky-50 border border-sky-200 rounded-2xl p-3">
+                <div class="flex items-center gap-1.5 text-sky-700 font-bold text-xs uppercase tracking-wider mb-1">
+                    <span>🔬</span> <span id="fact-title">Science Fact</span>
+                </div>
+                <p id="fact-text" class="text-xs sm:text-sm text-slate-700 leading-relaxed">
+                    Your digestive system breaks down the food you eat into tiny nutrients that give your body energy to grow and play!
+                </p>
+            </div>
+        </section>
+
+        <!-- Right Main Interactive Stage -->
+        <section class="lg:col-span-8 bg-white rounded-3xl shadow-md border border-sky-100 p-4 sm:p-6 flex flex-col justify-between min-h-[470px]">
+            
+            <!-- Stage Header & Instructions -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div>
+                    <span id="stage-badge" class="inline-block text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 mb-1">Welcome</span>
+                    <h2 id="stage-heading" class="text-2xl sm:text-3xl font-bold text-slate-800">Ready to Digest?</h2>
+                </div>
+                <div id="stage-goal-box" class="hidden bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-2xl text-right">
+                    <div class="text-[11px] font-bold uppercase text-emerald-600">Stage Goal</div>
+                    <div id="stage-goal-text" class="font-display font-bold text-emerald-800 text-base">0 / 10</div>
+                </div>
+            </div>
+
+            <!-- Dynamic Game / Activity Viewport -->
+            <div id="game-viewport" class="relative flex-1 my-3 rounded-2xl overflow-hidden bg-slate-50 border-2 border-slate-200 flex flex-col items-center justify-center min-h-[320px]">
+                <!-- Injected dynamically -->
+            </div>
+
+            <!-- Bottom Controls / Action Bar -->
+            <div id="controls-bar" class="pt-2 flex flex-wrap items-center justify-between gap-3">
+                <p id="control-hint" class="text-sm font-semibold text-slate-500">Click the button to start your journey!</p>
+                <button id="next-btn" onclick="startJourney()" class="ml-auto bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white font-display font-bold text-lg px-7 py-3 rounded-2xl shadow-md hover:shadow-lg transition transform active:scale-95">
+                    Start Adventure 🚀
+                </button>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        // ==========================================
+        // GAME STATE & EDUCATIONAL DATA
+        // ==========================================
+        const state = {
+            currentStage: 0, // 0: Intro, 1: Mouth & Esophagus, 2: Stomach Boat, 3: Small Intestine 3D, 4: Large Intestine 3D, 5: Quiz, 6: Complete
+            score: 0,
+            animFrameId: null,
+            cleanupFn: null
+        };
+
+        const STAGES = [
+            {
+                badge: "Welcome",
+                title: "Ready to Digest?",
+                hud: "Intro",
+                organ: null,
+                marker: null,
+                factTitle: "How Digestion Works",
+                fact: "Digestion turns a crunchy apple or slice of pizza into microscopic fuel! Follow the path from the mouth all the way through the intestines."
+            },
+            {
+                badge: "Stages 1 & 2",
+                title: "Mouth & Esophagus",
+                hud: "Mouth & Esophagus",
+                organ: "svg-mouth",
+                marker: { x: 102, y: 95 },
+                factTitle: "Chewing & Peristalsis",
+                fact: "Teeth mash food into small pieces while saliva (spit) starts breaking down starches. Then, wave-like muscle squeezes called PERISTALSIS push food down the esophagus!"
+            },
+            {
+                badge: "Stage 3 • Boat Mini-Game",
+                title: "Stomach Acid Cruiser",
+                hud: "Stomach",
+                organ: "svg-stomach",
+                marker: { x: 138, y: 228 },
+                factTitle: "Stomach Acid & Churning",
+                fact: "Your stomach is a stretchy muscular bag filled with strong gastric acid and enzymes. It churns food into a soupy liquid called CHYME."
+            },
+            {
+                badge: "Stage 4 • 3D Tunnel Runner",
+                title: "Small Intestine Dash",
+                hud: "Small Intestine",
+                organ: "svg-small",
+                marker: { x: 138, y: 292 },
+                factTitle: "Nutrient Absorption",
+                fact: "The Small Intestine is about 20 feet long! Tiny finger-like bumps called VILLI absorb vitamins, sugars, and proteins straight into your bloodstream."
+            },
+            {
+                badge: "Stage 5 • 3D Tunnel Runner",
+                title: "Large Intestine Sprint",
+                hud: "Large Intestine",
+                organ: "svg-large",
+                marker: { x: 165, y: 285 },
+                factTitle: "Water Absorption",
+                fact: "The Large Intestine absorbs leftover water and minerals back into your body so you stay hydrated, turning what's left into solid waste."
+            },
+            {
+                badge: "Final Check",
+                title: "Digestive Brain Check!",
+                hud: "Quiz",
+                organ: null,
+                marker: { x: 142, y: 345 },
+                factTitle: "You Made It!",
+                fact: "Answer 5 quick questions about what you just experienced to earn your Junior Biologist badge!"
+            }
+        ];
+
+        const QUIZ_QUESTIONS = [
+            {
+                q: "1. What is the wave-like muscle movement that pushes food down the esophagus into the stomach?",
+                options: ["Photosynthesis", "Peristalsis", "Circulation", "Evaporation"],
+                correct: 1,
+                explanation: "Peristalsis is the smooth muscle squeezing that pushes food down the esophagus—even if you were upside down!"
+            },
+            {
+                q: "2. What happens to food inside the stomach?",
+                options: [
+                    "It is frozen solid before moving on",
+                    "Stomach acid and churning turn it into a liquid called chyme",
+                    "All water is completely removed",
+                    "It goes straight into the bloodstream"
+                ],
+                correct: 1,
+                explanation: "Strong stomach acid and enzymes break down proteins while muscles churn the food into liquid chyme."
+            },
+            {
+                q: "3. Where does MOST nutrient absorption into the bloodstream happen?",
+                options: ["The Esophagus", "The Mouth", "The Small Intestine", "The Large Intestine"],
+                correct: 2,
+                explanation: "The Small Intestine uses millions of tiny finger-like villi to absorb nutrients into your blood."
+            },
+            {
+                q: "4. What is the main job of the Large Intestine?",
+                options: [
+                    "To chew food with teeth",
+                    "To absorb water back into the body",
+                    "To pump blood to the lungs",
+                    "To make stomach acid"
+                ],
+                correct: 1,
+                explanation: "The Large Intestine soaks up leftover water so your body stays hydrated."
+            },
+            {
+                q: "5. What is the correct order that food travels through the digestive tract?",
+                options: [
+                    "Mouth → Stomach → Esophagus → Large Intestine → Small Intestine",
+                    "Mouth → Esophagus → Stomach → Small Intestine → Large Intestine",
+                    "Esophagus → Mouth → Small Intestine → Stomach → Large Intestine",
+                    "Mouth → Small Intestine → Stomach → Esophagus → Large Intestine"
+                ],
+                correct: 1,
+                explanation: "Food enters the Mouth, travels down the Esophagus, churns in the Stomach, absorbs nutrients in the Small Intestine, and finishes in the Large Intestine!"
+            }
+        ];
+
+        // ==========================================
+        // DOM HELPERS
+        // ==========================================
+        const el = {
+            hudStage: document.getElementById('hud-stage'),
+            hudScore: document.getElementById('hud-score'),
+            stageBadge: document.getElementById('stage-badge'),
+            stageHeading: document.getElementById('stage-heading'),
+            stageGoalBox: document.getElementById('stage-goal-box'),
+            stageGoalText: document.getElementById('stage-goal-text'),
+            viewport: document.getElementById('game-viewport'),
+            controlHint: document.getElementById('control-hint'),
+            nextBtn: document.getElementById('next-btn'),
+            factTitle: document.getElementById('fact-title'),
+            factText: document.getElementById('fact-text'),
+            foodMarker: document.getElementById('food-marker')
+        };
+
+        function addScore(pts) {
+            state.score += pts;
+            el.hudScore.textContent = state.score;
+        }
+
+        function stopCurrentLoop() {
+            if (state.animFrameId) {
+                cancelAnimationFrame(state.animFrameId);
+                state.animFrameId = null;
+            }
+            if (state.cleanupFn) {
+                state.cleanupFn();
+                state.cleanupFn = null;
+            }
+        }
+
+        function updateSideMap(stageIndex) {
+            const organIds = ['svg-mouth', 'svg-esophagus', 'svg-stomach', 'svg-small', 'svg-large'];
+            organIds.forEach(id => {
+                const node = document.getElementById(id);
+                node.classList.remove('organ-glow', 'organ-inactive', 'organ-done');
+                node.classList.add('organ-inactive');
+            });
+
+            if (stageIndex >= 1) {
+                setOrganState('svg-mouth', stageIndex === 1 ? 'organ-glow' : 'organ-done');
+                setOrganState('svg-esophagus', stageIndex === 1 ? 'organ-glow' : 'organ-done');
+            }
+            if (stageIndex >= 2) {
+                setOrganState('svg-stomach', stageIndex === 2 ? 'organ-glow' : 'organ-done');
+            }
+            if (stageIndex >= 3) {
+                setOrganState('svg-small', stageIndex === 3 ? 'organ-glow' : 'organ-done');
+            }
+            if (stageIndex >= 4) {
+                setOrganState('svg-large', stageIndex === 4 ? 'organ-glow' : 'organ-done');
+            }
+
+            const info = STAGES[stageIndex];
+            if (info && info.marker) {
+                el.foodMarker.style.display = 'block';
+                el.foodMarker.setAttribute('cx', info.marker.x);
+                el.foodMarker.setAttribute('cy', info.marker.y);
+            } else {
+                el.foodMarker.style.display = 'none';
+            }
+        }
+
+        function setOrganState(id, cls) {
+            const node = document.getElementById(id);
+            node.classList.remove('organ-glow', 'organ-inactive', 'organ-done');
+            node.classList.add(cls);
+        }
+
+        function setStageHeader(stageIndex, showGoal = false, goalText = "") {
+            const info = STAGES[stageIndex];
+            el.hudStage.textContent = info.hud;
+            el.stageBadge.textContent = info.badge;
+            el.stageHeading.textContent = info.title;
+            el.factTitle.textContent = info.factTitle;
+            el.factText.textContent = info.fact;
+
+            if (showGoal) {
+                el.stageGoalBox.classList.remove('hidden');
+                el.stageGoalText.textContent = goalText;
+            } else {
+                el.stageGoalBox.classList.add('hidden');
+            }
+            updateSideMap(stageIndex);
+        }
+
+        // ==========================================
+        // STAGE 0: INTRO SCREEN
+        // ==========================================
+        function renderIntro() {
+            stopCurrentLoop();
+            state.currentStage = 0;
+            state.score = 0;
+            el.hudScore.textContent = "0";
+            setStageHeader(0, false);
+
+            el.viewport.innerHTML = `
+                <div class="p-6 text-center max-w-lg mx-auto flex flex-col items-center">
+                    <div class="flex items-center gap-3 text-4xl sm:text-5xl mb-4">
+                        <span>🍕</span><span>➡️</span><span>🚤</span><span>➡️</span><span>🏃‍♂️</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-800 mb-2">Welcome to Digestive Quest!</h3>
+                    <p class="text-slate-600 text-sm sm:text-base mb-5">
+                        Follow a meal from the first bite all the way through the body! You'll chew food, steer a boat across stomach acid, and dash in 3D through the intestines.
+                    </p>
+                    <div class="grid grid-cols-3 gap-2 w-full text-xs font-bold text-slate-700">
+                        <div class="bg-rose-50 border border-rose-200 p-2.5 rounded-xl">1. Chew & Swallow</div>
+                        <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-xl">2. Stomach Boat</div>
+                        <div class="bg-pink-50 border border-pink-200 p-2.5 rounded-xl">3. 3D Intestines</div>
+                    </div>
+                </div>
+            `;
+
+            el.controlHint.textContent = "Works with keyboard, mouse, or touch!";
+            el.nextBtn.style.display = 'inline-block';
+            el.nextBtn.textContent = "Start Adventure 🚀";
+            el.nextBtn.onclick = () => loadStage(1);
+        }
+
+        function startJourney() {
+            loadStage(1);
+        }
+
+        function loadStage(idx) {
+            stopCurrentLoop();
+            state.currentStage = idx;
+            el.nextBtn.style.display = 'none';
+
+            if (idx === 1) runMouthAndEsophagus();
+            else if (idx === 2) runStomachBoatGame();
+            else if (idx === 3) runIntestine3DGame('small');
+            else if (idx === 4) runIntestine3DGame('large');
+            else if (idx === 5) runComprehensionQuiz();
+        }
+
+        // ==========================================
+        // STAGE 1: MOUTH & ESOPHAGUS (Simple & Fun)
+        // ==========================================
+        function runMouthAndEsophagus() {
+            setStageHeader(1, true, "Chew: 0 / 5");
+            el.controlHint.textContent = "Tap the pizza slice 5 times to chew it into a soft bolus!";
+
+            let chews = 0;
+            const targetChews = 5;
+            let phase = 'mouth'; // 'mouth' -> 'esophagus'
+            let squeezes = 0;
+
+            el.viewport.innerHTML = `
+                <div id="s1-container" class="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-rose-50 to-orange-50">
+                    <div id="s1-instruction" class="text-lg sm:text-xl font-display font-bold text-rose-700 mb-4 text-center">
+                        Step 1: Tap the food to chew with teeth & saliva!
+                    </div>
+                    
+                    <button id="food-click-target" class="w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-white shadow-lg border-4 border-rose-300 flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95">
+                        <span id="food-emoji" class="text-6xl sm:text-7xl">🍕</span>
+                        <span id="food-label" class="text-xs font-extrabold uppercase text-rose-600 mt-2">Tap to Chew!</span>
+                    </button>
+
+                    <div class="w-64 bg-white h-4 rounded-full border border-rose-200 mt-6 overflow-hidden shadow-inner">
+                        <div id="s1-bar" class="bg-gradient-to-r from-rose-500 to-orange-400 h-full w-0 transition-all duration-200"></div>
+                    </div>
+                </div>
+            `;
+
+            const targetBtn = document.getElementById('food-click-target');
+            const foodEmoji = document.getElementById('food-emoji');
+            const foodLabel = document.getElementById('food-label');
+            const s1Bar = document.getElementById('s1-bar');
+            const s1Inst = document.getElementById('s1-instruction');
+
+            targetBtn.onclick = () => {
+                targetBtn.classList.remove('chomp-anim');
+                void targetBtn.offsetWidth;
+                targetBtn.classList.add('chomp-anim');
+
+                if (phase === 'mouth') {
+                    chews++;
+                    addScore(20);
+                    el.stageGoalText.textContent = `Chew: ${chews} / ${targetChews}`;
+                    s1Bar.style.width = `${(chews / targetChews) * 100}%`;
+
+                    if (chews === 2) foodEmoji.textContent = "🥪";
+                    if (chews === 4) foodEmoji.textContent = "🟡";
+
+                    if (chews >= targetChews) {
+                        phase = 'esophagus';
+                        foodEmoji.textContent = "🟢";
+                        foodLabel.textContent = "Squeeze Down!";
+                        s1Inst.textContent = "Step 2: Tap 3 times to squeeze the bolus down the Esophagus!";
+                        el.controlHint.textContent = "Peristalsis! Tap to push the bolus down to the stomach.";
+                        el.stageGoalText.textContent = "Swallow: 0 / 3";
+                        s1Bar.style.width = "0%";
+                        // Move dot down esophagus
+                        el.foodMarker.setAttribute('cx', 132);
+                        el.foodMarker.setAttribute('cy', 135);
+                    }
+                } else if (phase === 'esophagus') {
+                    squeezes++;
+                    addScore(30);
+                    el.stageGoalText.textContent = `Swallow: ${squeezes} / 3`;
+                    s1Bar.style.width = `${(squeezes / 3) * 100}%`;
+
+                    // Move dot progressively down the esophagus on the side map
+                    el.foodMarker.setAttribute('cx', 134);
+                    el.foodMarker.setAttribute('cy', 135 + squeezes * 20);
+
+                    if (squeezes >= 3) {
+                        targetBtn.disabled = true;
+                        foodEmoji.textContent = "✅";
+                        foodLabel.textContent = "Reached Stomach!";
+                        s1Inst.textContent = "Awesome! The bolus entered the Stomach!";
+                        el.controlHint.textContent = "Click Next to hop in your Stomach Acid Boat!";
+                        el.nextBtn.style.display = 'inline-block';
+                        el.nextBtn.textContent = "Enter Stomach 🚤";
+                        el.nextBtn.onclick = () => loadStage(2);
+                    }
+                }
+            };
+        }
+
+        // ==========================================
+        // STAGE 2: STOMACH BOAT GAME (2D Canvas)
+        // ==========================================
+        function runStomachBoatGame() {
+            setStageHeader(2, true, "Dissolved: 0 / 10");
+            el.controlHint.textContent = "Move boat with Left/Right Arrows, A/D, or drag/touch! Catch food, avoid green gas bubbles!";
+
+            el.viewport.innerHTML = `<canvas id="stomach-canvas"></canvas>`;
+            const canvas = document.getElementById('stomach-canvas');
+            const ctx = canvas.getContext('2d');
+
+            let width = canvas.width = el.viewport.clientWidth;
+            let height = canvas.height = el.viewport.clientHeight;
+
+            const onResize = () => {
+                if (!canvas.parentElement) return;
+                width = canvas.width = el.viewport.clientWidth;
+                height = canvas.height = el.viewport.clientHeight;
+            };
+            window.addEventListener('resize', onResize);
+
+            // Game variables
+            const boat = { x: width / 2, w: 86, h: 34, speed: 7 };
+            const keys = { left: false, right: false };
+            let pointerX = null;
+            let items = [];
+            let particles = [];
+            let dissolved = 0;
+            const targetDissolved = 10;
+            let spawnTimer = 0;
+            let waveOffset = 0;
+            let completed = false;
+
+            const foodEmojis = ['🍎', '🥕', '🍞', '🍗', '🧀'];
+
+            // Controls
+            const onKeyDown = (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+            };
+            const onKeyUp = (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+            };
+            const onPointerMove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                pointerX = clientX - rect.left;
+            };
+            const onPointerEnd = () => { pointerX = null; };
+
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+            canvas.addEventListener('mousemove', onPointerMove);
+            canvas.addEventListener('touchmove', onPointerMove, { passive: true });
+            canvas.addEventListener('touchstart', onPointerMove, { passive: true });
+            canvas.addEventListener('touchend', onPointerEnd);
+
+            state.cleanupFn = () => {
+                window.removeEventListener('resize', onResize);
+                window.removeEventListener('keydown', onKeyDown);
+                window.removeEventListener('keyup', onKeyUp);
+            };
+
+            function spawnSplash(x, y, color) {
+                for (let i = 0; i < 8; i++) {
+                    particles.push({
+                        x, y,
+                        vx: (Math.random() - 0.5) * 5,
+                        vy: -Math.random() * 4 - 1,
+                        life: 25,
+                        color
+                    });
+                }
+            }
+
+            function loop() {
+                // Background: warm stomach lining
+                const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+                bgGrad.addColorStop(0, '#ffe4e6');
+                bgGrad.addColorStop(1, '#fecdd3');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, width, height);
+
+                // Subtle stomach rugae (folds)
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.12)';
+                ctx.lineWidth = 6;
+                for (let y = 40; y < height - 60; y += 65) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.quadraticCurveTo(width * 0.5, y + 22, width, y);
+                    ctx.stroke();
+                }
+
+                // Move boat
+                if (!completed) {
+                    if (keys.left) boat.x -= boat.speed;
+                    if (keys.right) boat.x += boat.speed;
+                    if (pointerX !== null) {
+                        boat.x += (pointerX - boat.x) * 0.18;
+                    }
+                    boat.x = Math.max(boat.w / 2 + 10, Math.min(width - boat.w / 2 - 10, boat.x));
+                }
+
+                const waterLevel = height - 68;
+                waveOffset += 0.06;
+
+                // Spawn food & gas bubbles
+                if (!completed) {
+                    spawnTimer++;
+                    if (spawnTimer > 42) {
+                        spawnTimer = 0;
+                        const isGas = Math.random() < 0.28; // 28% gas bubbles, 72% food
+                        items.push({
+                            x: 35 + Math.random() * (width - 70),
+                            y: -25,
+                            vy: 2.3 + Math.random() * 1.4,
+                            isGas,
+                            emoji: isGas ? '🫧' : foodEmojis[Math.floor(Math.random() * foodEmojis.length)],
+                            radius: 22
+                        });
+                    }
+                }
+
+                // Update & draw falling items
+                ctx.font = '28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                for (let i = items.length - 1; i >= 0; i--) {
+                    const it = items[i];
+                    it.y += it.vy;
+
+                    // Draw glow circle behind item for clarity
+                    ctx.beginPath();
+                    ctx.arc(it.x, it.y, 19, 0, Math.PI * 2);
+                    ctx.fillStyle = it.isGas ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255, 255, 255, 0.85)';
+                    ctx.fill();
+
+                    ctx.fillText(it.emoji, it.x, it.y);
+
+                    // Check collision with boat (generous hitbox)
+                    if (!completed && Math.abs(it.x - boat.x) < (boat.w * 0.55 + 12) && Math.abs(it.y - (waterLevel - 8)) < 28) {
+                        if (it.isGas) {
+                            spawnSplash(it.x, it.y, '#22c55e');
+                            // Gentle bounce without harsh punishment
+                            boat.x += (boat.x > it.x ? 25 : -25);
+                        } else {
+                            dissolved++;
+                            addScore(25);
+                            el.stageGoalText.textContent = `Dissolved: ${dissolved} / ${targetDissolved}`;
+                            spawnSplash(it.x, it.y, '#f59e0b');
+
+                            if (dissolved >= targetDissolved) {
+                                completed = true;
+                                items = [];
+                                el.controlHint.textContent = "Chyme is ready! Click Next to enter the Small Intestine.";
+                                el.nextBtn.style.display = 'inline-block';
+                                el.nextBtn.textContent = "Enter Small Intestine 🏃‍♂️";
+                                el.nextBtn.onclick = () => loadStage(3);
+                            }
+                        }
+                        items.splice(i, 1);
+                        continue;
+                    }
+
+                    if (it.y > waterLevel + 10) {
+                        items.splice(i, 1);
+                    }
+                }
+
+                // Draw Boat floating on acid waves
+                const boatBob = Math.sin(waveOffset * 1.4) * 3;
+                const by = waterLevel + boatBob;
+
+                ctx.save();
+                ctx.translate(boat.x, by);
+                // Sail / Enzyme flag
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(0, -34);
+                ctx.lineTo(24, -16);
+                ctx.lineTo(0, -12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#0284c7';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Mast
+                ctx.beginPath();
+                ctx.moveTo(0, -36);
+                ctx.lineTo(0, 0);
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Boat Hull
+                ctx.fillStyle = '#0284c7';
+                ctx.beginPath();
+                ctx.moveTo(-boat.w / 2, 0);
+                ctx.lineTo(boat.w / 2, 0);
+                ctx.lineTo(boat.w / 2 - 14, 20);
+                ctx.lineTo(-boat.w / 2 + 14, 20);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // Draw Stomach Acid Waves in front of boat hull
+                ctx.fillStyle = 'rgba(250, 204, 21, 0.78)';
+                ctx.beginPath();
+                ctx.moveTo(0, height);
+                for (let x = 0; x <= width; x += 20) {
+                    const wy = waterLevel + 8 + Math.sin(x * 0.03 + waveOffset) * 5;
+                    ctx.lineTo(x, wy);
+                }
+                ctx.lineTo(width, height);
+                ctx.closePath();
+                ctx.fill();
+
+                // Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life--;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+
+                // Completion Overlay banner inside canvas
+                if (completed) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.roundRect(width / 2 - 155, height / 2 - 48, 310, 96, 18);
+                    ctx.fill();
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = 'bold 22px Fredoka, sans-serif';
+                    ctx.fillText('Chyme Created! 🎉', width / 2, height / 2 - 12);
+                    ctx.font = '600 14px Nunito, sans-serif';
+                    ctx.fillStyle = '#475569';
+                    ctx.fillText('Food dissolved into nutrient soup!', width / 2, height / 2 + 18);
+                }
+
+                state.animFrameId = requestAnimationFrame(loop);
+            }
+
+            loop();
+        }
+
+        // ==========================================
+        // STAGES 3 & 4: FIRST-PERSON 3D INTESTINE TUNNEL RUNNER
+        // ==========================================
+        function runIntestine3DGame(mode) {
+            const isSmall = mode === 'small';
+            const stageIdx = isSmall ? 3 : 4;
+            const targetCount = 10;
+            const goalLabel = isSmall ? "Nutrients" : "Water";
+
+            setStageHeader(stageIdx, true, `${goalLabel}: 0 / ${targetCount}`);
+            el.controlHint.textContent = isSmall
+                ? "First-Person View! Steer with Arrow Keys, WASD, or touch/drag to collect glowing Nutrients ⭐ and dodge Fiber Blocks 🟫!"
+                : "First-Person View! Steer with Arrow Keys, WASD, or touch/drag to collect Water Drops 💧 and dodge Waste Blocks 🟫!";
+
+            el.viewport.innerHTML = `<canvas id="tunnel-canvas"></canvas>`;
+            const canvas = document.getElementById('tunnel-canvas');
+            const ctx = canvas.getContext('2d');
+
+            let width = canvas.width = el.viewport.clientWidth;
+            let height = canvas.height = el.viewport.clientHeight;
+
+            const onResize = () => {
+                if (!canvas.parentElement) return;
+                width = canvas.width = el.viewport.clientWidth;
+                height = canvas.height = el.viewport.clientHeight;
+            };
+            window.addEventListener('resize', onResize);
+
+            // Player position in normalized tunnel space (-1 to +1)
+            const player = { x: 0, y: 0, vx: 0, vy: 0 };
+            const keys = { left: false, right: false, up: false, down: false };
+            let pointerTarget = null;
+
+            let entities = []; // { x, y, z, type: 'good' | 'bad', emoji }
+            let collected = 0;
+            let spawnTimer = 0;
+            let tunnelPhase = 0;
+            let flashColor = null;
+            let flashAlpha = 0;
+            let completed = false;
+
+            const goodEmojis = isSmall ? ['⭐', '⚡', '💎'] : ['💧', '💦'];
+
+            // Controls
+            const onKeyDown = (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+                if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.up = true;
+                if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = true;
+            };
+            const onKeyUp = (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+                if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+                if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.up = false;
+                if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
+            };
+            const onPointerMove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                // Map screen position to -0.75 .. +0.75
+                const nx = ((cx - rect.left) / rect.width) * 2 - 1;
+                const ny = ((cy - rect.top) / rect.height) * 2 - 1;
+                pointerTarget = { x: Math.max(-0.75, Math.min(0.75, nx)), y: Math.max(-0.75, Math.min(0.75, ny)) };
+            };
+            const onPointerEnd = () => { pointerTarget = null; };
+
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+            canvas.addEventListener('mousemove', onPointerMove);
+            canvas.addEventListener('touchmove', onPointerMove, { passive: true });
+            canvas.addEventListener('touchstart', onPointerMove, { passive: true });
+            canvas.addEventListener('touchend', onPointerEnd);
+
+            state.cleanupFn = () => {
+                window.removeEventListener('resize', onResize);
+                window.removeEventListener('keydown', onKeyDown);
+                window.removeEventListener('keyup', onKeyUp);
+            };
+
+            function triggerFlash(color) {
+                flashColor = color;
+                flashAlpha = 0.35;
+            }
+
+            function loop() {
+                // Move player steering
+                if (!completed) {
+                    const steerSpeed = 0.032;
+                    if (keys.left) player.x -= steerSpeed;
+                    if (keys.right) player.x += steerSpeed;
+                    if (keys.up) player.y -= steerSpeed;
+                    if (keys.down) player.y += steerSpeed;
+
+                    if (pointerTarget) {
+                        player.x += (pointerTarget.x - player.x) * 0.14;
+                        player.y += (pointerTarget.y - player.y) * 0.14;
+                    }
+
+                    // Keep inside tunnel radius
+                    const dist = Math.hypot(player.x, player.y);
+                    if (dist > 0.72) {
+                        player.x = (player.x / dist) * 0.72;
+                        player.y = (player.y / dist) * 0.72;
+                    }
+                }
+
+                // Camera shifts slightly opposite to player movement for true 1st-person feel
+                const cx = width / 2 - player.x * 90;
+                const cy = height / 2 - player.y * 70;
+                const maxRadius = Math.hypot(width, height) * 0.62;
+
+                // Tunnel Wall Base Color
+                ctx.fillStyle = isSmall ? '#831843' : '#4c1d95';
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw Concentric 3D Tunnel Rings moving toward viewer
+                tunnelPhase = (tunnelPhase + 0.018) % 1;
+                const ringCount = 14;
+                for (let i = ringCount; i >= 1; i--) {
+                    const depth = (i - tunnelPhase) / ringCount; // 0 (near) to 1 (far)
+                    const scale = Math.pow(1 - depth, 1.85);
+                    const r = Math.max(12, maxRadius * scale);
+
+                    // Subtle organic curve in tunnel center
+                    const rx = cx + Math.sin(depth * 3 + tunnelPhase) * 18 * depth;
+                    const ry = cy + Math.cos(depth * 2.5) * 14 * depth;
+
+                    ctx.beginPath();
+                    ctx.arc(rx, ry, r, 0, Math.PI * 2);
+                    if (isSmall) {
+                        ctx.fillStyle = i % 2 === 0 ? '#db2777' : '#be185d';
+                    } else {
+                        ctx.fillStyle = i % 2 === 0 ? '#7c3aed' : '#6d28d9';
+                    }
+                    ctx.fill();
+
+                    // Villi bumps along ring edge (Small Intestine detail)
+                    if (isSmall && i % 2 === 0 && r > 45) {
+                        ctx.strokeStyle = 'rgba(251, 207, 232, 0.35)';
+                        ctx.lineWidth = Math.max(2, 8 * scale);
+                        ctx.setLineDash([6 * scale, 10 * scale]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+
+                // Glowing far exit of tunnel
+                const exitGrad = ctx.createRadialGradient(cx, cy, 4, cx, cy, 65);
+                exitGrad.addColorStop(0, '#fef08a');
+                exitGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+                ctx.fillStyle = exitGrad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 65, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Spawn entities in tunnel
+                if (!completed) {
+                    spawnTimer++;
+                    if (spawnTimer > 36) {
+                        spawnTimer = 0;
+                        const isGood = Math.random() < 0.65; // 65% good collectibles, 35% obstacles
+                        const angle = Math.random() * Math.PI * 2;
+                        const rad = Math.random() * 0.58;
+                        entities.push({
+                            x: Math.cos(angle) * rad,
+                            y: Math.sin(angle) * rad,
+                            z: 1.0, // starts far away (1.0) and approaches 0.0
+                            isGood,
+                            emoji: isGood ? goodEmojis[Math.floor(Math.random() * goodEmojis.length)] : '🟫'
+                        });
+                    }
+                }
+
+                // Sort far-to-near so closer objects draw on top
+                entities.sort((a, b) => b.z - a.z);
+
+                for (let i = entities.length - 1; i >= 0; i--) {
+                    const ent = entities[i];
+                    ent.z -= 0.013; // approachable middle-school speed
+
+                    const scale = Math.pow(1 - Math.max(0, ent.z), 1.85);
+                    const screenX = cx + (ent.x - player.x * 0.45) * maxRadius * scale;
+                    const screenY = cy + (ent.y - player.y * 0.45) * maxRadius * scale;
+                    const size = Math.max(10, 68 * scale);
+
+                    // Draw shadow/glow ring
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY, size * 0.55, 0, Math.PI * 2);
+                    ctx.fillStyle = ent.isGood
+                        ? (isSmall ? 'rgba(250, 204, 21, 0.35)' : 'rgba(56, 189, 248, 0.35)')
+                        : 'rgba(120, 53, 15, 0.55)';
+                    ctx.fill();
+
+                    ctx.font = `${Math.floor(size)}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(ent.emoji, screenX, screenY);
+
+                    // Check collision when object reaches player plane (z near 0.06)
+                    if (!completed && ent.z <= 0.08 && ent.z >= -0.05) {
+                        const distToPlayer = Math.hypot(ent.x - player.x, ent.y - player.y);
+                        // Generous pickup radius for good items, fair dodge radius for obstacles
+                        const hitThreshold = ent.isGood ? 0.34 : 0.22;
+
+                        if (distToPlayer < hitThreshold) {
+                            if (ent.isGood) {
+                                collected++;
+                                addScore(30);
+                                el.stageGoalText.textContent = `${goalLabel}: ${collected} / ${targetCount}`;
+                                triggerFlash(isSmall ? '#facc15' : '#38bdf8');
+
+                                if (collected >= targetCount) {
+                                    completed = true;
+                                    entities = [];
+                                    if (isSmall) {
+                                        el.controlHint.textContent = "Nutrients absorbed into the bloodstream! Next stop: Large Intestine.";
+                                        el.nextBtn.style.display = 'inline-block';
+                                        el.nextBtn.textContent = "Enter Large Intestine 💧";
+                                        el.nextBtn.onclick = () => loadStage(4);
+                                    } else {
+                                        el.controlHint.textContent = "Water absorbed! Click Next for your final Digestive Quiz!";
+                                        el.nextBtn.style.display = 'inline-block';
+                                        el.nextBtn.textContent = "Take Final Quiz 🧠";
+                                        el.nextBtn.onclick = () => loadStage(5);
+                                    }
+                                }
+                            } else {
+                                triggerFlash('#ef4444');
+                            }
+                            entities.splice(i, 1);
+                            continue;
+                        }
+                    }
+
+                    if (ent.z < -0.08) {
+                        entities.splice(i, 1);
+                    }
+                }
+
+                // First-person HUD crosshair / steering ring
+                const hudX = width / 2 + player.x * 110;
+                const hudY = height / 2 + player.y * 85;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(hudX, hudY, 22, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(hudX, hudY, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Screen flash feedback
+                if (flashAlpha > 0) {
+                    ctx.fillStyle = flashColor;
+                    ctx.globalAlpha = flashAlpha;
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.globalAlpha = 1;
+                    flashAlpha -= 0.03;
+                }
+
+                // Completion Overlay
+                if (completed) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+                    ctx.roundRect(width / 2 - 165, height / 2 - 50, 330, 100, 18);
+                    ctx.fill();
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = 'bold 22px Fredoka, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(isSmall ? 'Nutrients Absorbed! ⭐' : 'Water Absorbed! 💧', width / 2, height / 2 - 12);
+                    ctx.font = '600 14px Nunito, sans-serif';
+                    ctx.fillStyle = '#475569';
+                    ctx.fillText(
+                        isSmall ? 'Villi sent fuel straight to your blood!' : 'Your body stayed hydrated!',
+                        width / 2, height / 2 + 18
+                    );
+                }
+
+                state.animFrameId = requestAnimationFrame(loop);
+            }
+
+            loop();
+        }
+
+        // ==========================================
+        // STAGE 5: COMPREHENSION QUIZ
+        // ==========================================
+        function runComprehensionQuiz() {
+            setStageHeader(5, true, "Question 1 / 5");
+            el.controlHint.textContent = "Read each question carefully and pick the best answer!";
+
+            let qIndex = 0;
+            let correctAnswers = 0;
+            let answered = false;
+
+            function renderQuestion() {
+                answered = false;
+                const item = QUIZ_QUESTIONS[qIndex];
+                el.stageGoalText.textContent = `Question ${qIndex + 1} / ${QUIZ_QUESTIONS.length}`;
+                el.nextBtn.style.display = 'none';
+
+                el.viewport.innerHTML = `
+                    <div class="w-full h-full p-5 sm:p-7 flex flex-col justify-between bg-white overflow-y-auto">
+                        <div>
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 mb-1">
+                                Question ${qIndex + 1} of ${QUIZ_QUESTIONS.length}
+                            </div>
+                            <h3 class="text-lg sm:text-xl font-bold text-slate-800 mb-4">${item.q}</h3>
+                            <div id="quiz-options" class="space-y-2.5">
+                                ${item.options.map((opt, idx) => `
+                                    <button data-idx="${idx}" class="quiz-opt w-full text-left p-3.5 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 font-semibold text-slate-700 transition flex items-center gap-3">
+                                        <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                            ${String.fromCharCode(65 + idx)}
+                                        </span>
+                                        <span>${opt}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div id="quiz-feedback" class="hidden mt-4 p-3.5 rounded-2xl text-sm font-semibold"></div>
+                    </div>
+                `;
+
+                const optButtons = document.querySelectorAll('.quiz-opt');
+                const feedbackBox = document.getElementById('quiz-feedback');
+
+                optButtons.forEach(btn => {
+                    btn.onclick = () => {
+                        if (answered) return;
+                        answered = true;
+                        const chosen = parseInt(btn.getAttribute('data-idx'), 10);
+                        const isRight = chosen === item.correct;
+
+                        optButtons.forEach((b, i) => {
+                            b.disabled = true;
+                            if (i === item.correct) {
+                                b.classList.remove('border-slate-200');
+                                b.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-900');
+                            } else if (i === chosen && !isRight) {
+                                b.classList.remove('border-slate-200');
+                                b.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-900');
+                            }
+                        });
+
+                        feedbackBox.classList.remove('hidden');
+                        if (isRight) {
+                            correctAnswers++;
+                            addScore(100);
+                            feedbackBox.className = "mt-4 p-3.5 rounded-2xl text-sm font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300";
+                            feedbackBox.innerHTML = `✅ <strong>Correct!</strong> ${item.explanation}`;
+                        } else {
+                            feedbackBox.className = "mt-4 p-3.5 rounded-2xl text-sm font-semibold bg-amber-100 text-amber-900 border border-amber-300";
+                            feedbackBox.innerHTML = `💡 <strong>Not quite!</strong> ${item.explanation}`;
+                        }
+
+                        el.nextBtn.style.display = 'inline-block';
+                        if (qIndex < QUIZ_QUESTIONS.length - 1) {
+                            el.nextBtn.textContent = "Next Question ➡️";
+                            el.nextBtn.onclick = () => {
+                                qIndex++;
+                                renderQuestion();
+                            };
+                        } else {
+                            el.nextBtn.textContent = "See Final Results 🏆";
+                            el.nextBtn.onclick = () => renderFinalResults(correctAnswers);
+                        }
+                    };
+                });
+            }
+
+            renderQuestion();
+        }
+
+        // ==========================================
+        // FINAL COMPLETION SUMMARY
+        // ==========================================
+        function renderFinalResults(correctAnswers) {
+            el.hudStage.textContent = "Complete!";
+            el.stageBadge.textContent = "Mission Accomplished";
+            el.stageHeading.textContent = "Digestive Expert!";
+            el.stageGoalBox.classList.add('hidden');
+            el.controlHint.textContent = "Want to play again and beat your high score?";
+
+            const totalQ = QUIZ_QUESTIONS.length;
+            let badgeTitle = "Junior Biologist";
+            if (correctAnswers === totalQ) badgeTitle = "Master Digestive Scientist 🌟";
+            else if (correctAnswers >= 3) badgeTitle = " Digestive Explorer 🔬";
+
+            el.viewport.innerHTML = `
+                <div class="p-6 text-center max-w-md mx-auto flex flex-col items-center">
+                    <div class="text-6xl mb-3">🏆</div>
+                    <div class="inline-block px-4 py-1 rounded-full bg-amber-100 text-amber-800 font-extrabold text-xs uppercase tracking-wider mb-2">
+                        ${badgeTitle}
+                    </div>
+                    <h3 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Journey Complete!</h3>
+                    <p class="text-slate-600 text-sm mb-5">
+                        You guided your food through all 5 parts of the digestive system and answered <strong>${correctAnswers} out of ${totalQ}</strong> quiz questions right!
+                    </p>
+
+                    <div class="w-full bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl p-4 mb-2 flex justify-around">
+                        <div>
+                            <div class="text-xs font-bold uppercase text-slate-500">Quiz Score</div>
+                            <div class="text-2xl font-display font-bold text-indigo-700">${correctAnswers} / ${totalQ}</div>
+                        </div>
+                        <div class="w-px bg-sky-200"></div>
+                        <div>
+                            <div class="text-xs font-bold uppercase text-slate-500">Total Points</div>
+                            <div class="text-2xl font-display font-bold text-amber-600">${state.score}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            el.nextBtn.style.display = 'inline-block';
+            el.nextBtn.textContent = "Play Again 🔄";
+            el.nextBtn.onclick = () => renderIntro();
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            renderIntro();
+        };
+    </script>
+</body>
+</html>
