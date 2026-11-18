@@ -2,81 +2,458 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KidCode Games — Let the Fun Begin!</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#081327">
+  <meta name="description" content="KidCodeGames — Play, Create, Share. Explore a growing collection of fun games.">
+  <title>KidCodeGames | Play • Create • Share</title>
 
   <style>
-    body {
-      margin: 0;
-      font-family: "Comic Sans MS", sans-serif;
-      background: linear-gradient(to bottom right, #007bff, #00cc66);
-      color: white;
-      text-align: center;
+    :root {
+      --bg: #071225;
+      --panel: #11213b;
+      --panel2: #0c1b33;
+      --line: #263b58;
+      --text: #f5f9ff;
+      --muted: #b6c6de;
+      --cyan: #27d7ff;
+      --lime: #99fa38;
+      --yellow: #ffd34f;
     }
 
-    header img {
-      width: 100%;
-      max-height: 280px;
-      object-fit: cover;
-      border-bottom: 4px solid white;
-    }
-
-    h1 {
-      margin-top: 20px;
-      font-size: 42px;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
-
-    .game-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 30px;
-      padding: 40px;
-    }
-
-    .game {
-      background: rgba(0,0,0,0.25);
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.4);
-      transition: transform 0.2s;
-    }
-
-    .game:hover {
-      transform: scale(1.05);
-    }
-
-    .game img {
-      width: 100%;
-      border-radius: 12px;
-      border: 2px solid white;
-      cursor: pointer;
+    * {
       box-sizing: border-box;
     }
 
-    .platform-note {
-      color: #fff;
-      font-size: 0.9em;
-      opacity: 0.9;
-      margin-top: 10px;
+    html {
+      scroll-behavior: smooth;
     }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+      background: radial-gradient(
+        ellipse at 50% 0,
+        #183561 0,
+        var(--bg) 48%
+      );
+      color: var(--text);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    /* NAVIGATION */
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(6,17,37,.94);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar-inner {
+      max-width: 1240px;
+      margin: auto;
+      padding: 12px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      font-weight: 900;
+      font-size: 1.18rem;
+      letter-spacing: -.04em;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--lime);
+    }
+
+    .nav {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .nav a {
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: .94rem;
+    }
+
+    .nav a:hover,
+    .nav a:focus-visible {
+      color: var(--cyan);
+    }
+
+    .nav .nav-cta {
+      background: var(--lime);
+      color: #0b182b;
+      padding: 10px 17px;
+      border-radius: 12px;
+    }
+
+    /* HEADER BANNER */
+
+    .hero {
+      width: 100%;
+      background: #071225;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero img {
+      width: 100%;
+      max-height: 450px;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* INTRO SECTION */
+
+    .intro {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 31px 22px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: .18em;
+      font-size: .74rem;
+      color: var(--cyan);
+      font-weight: 900;
+      margin: 0 0 7px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4.5vw, 3.25rem);
+      line-height: 1.08;
+      margin: 0 0 10px;
+      letter-spacing: -.05em;
+    }
+
+    .lead {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.6;
+      max-width: 670px;
+    }
+
+    .hero-button {
+      background: var(--lime);
+      padding: 13px 20px;
+      font-weight: 900;
+      color: #09201b;
+      border-radius: 14px;
+      text-decoration: none;
+      white-space: nowrap;
+      box-shadow: 0 6px 24px rgba(153,250,56,.14);
+    }
+
+    .hero-button:hover {
+      filter: brightness(1.08);
+    }
+
+    /* MAIN CONTENT */
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 22px 22px 55px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      letter-spacing: -.035em;
+      margin: 0 0 6px;
+    }
+
+    .section-subtitle {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* GAME SEARCH */
+
+    .search {
+      background: #142742;
+      color: white;
+      border: 1px solid #365373;
+      border-radius: 12px;
+      padding: 12px 14px;
+      width: min(100%, 310px);
+      outline: none;
+    }
+
+    .search::placeholder {
+      color: #afc1d8;
+    }
+
+    .search:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(39,215,255,.14);
+    }
+
+    /* GAME GRID */
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+    }
+
+    .game-card {
+      min-width: 0;
+      background: linear-gradient(180deg, #152a49, #0c1c33);
+      border: 1px solid #284465;
+      border-radius: 19px;
+      overflow: hidden;
+      box-shadow: 0 12px 26px rgba(0,0,0,.17);
+      transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+    }
+
+    .game-card:hover,
+    .game-card:focus-within {
+      transform: translateY(-5px);
+      border-color: var(--cyan);
+      box-shadow: 0 12px 32px rgba(0,0,0,.35);
+    }
+
+    /* GAME IMAGES */
+
+    .image-wrap {
+      display: block;
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: #1a3150;
+      overflow: hidden;
+    }
+
+    .image-wrap img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .25s ease;
+    }
+
+    .game-card:hover .image-wrap img {
+      transform: scale(1.04);
+    }
+
+    .number-badge {
+      position: absolute;
+      top: 11px;
+      left: 11px;
+      background: rgba(4,14,31,.85);
+      border: 1px solid rgba(255,255,255,.28);
+      padding: 6px 10px;
+      border-radius: 9px;
+      font-size: .75rem;
+      font-weight: 800;
+    }
+
+    /* GAME CARD CONTENT */
+
+    .card-body {
+      padding: 17px;
+    }
+
+    .card-title {
+      margin: 0 0 5px;
+      font-size: 1.17rem;
+      font-weight: 850;
+      letter-spacing: -.025em;
+    }
+
+    .card-description {
+      margin: 0 0 15px;
+      color: var(--muted);
+      font-size: .89rem;
+      min-height: 2.75em;
+      line-height: 1.5;
+    }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .device {
+      color: #d9e6f4;
+      font-size: .76rem;
+      line-height: 1.3;
+    }
+
+    /* PLAY BUTTONS */
+
+    .play {
+      padding: 9px 14px;
+      background: var(--lime);
+      color: #0a1a14;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .play:hover,
+    .play:focus-visible {
+      background: #beff73;
+    }
+
+    .empty {
+      color: var(--muted);
+      display: none;
+      padding: 25px 0;
+    }
+
+    /* ABOUT SECTION */
+
+    .about {
+      margin-top: 47px;
+      border-radius: 22px;
+      border: 1px solid #29506b;
+      background: linear-gradient(120deg, #11345a, #15214a);
+      padding: 27px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .about p {
+      color: #d1e1f3;
+      max-width: 750px;
+      margin: 7px 0 0;
+      line-height: 1.6;
+    }
+
+    .about .tag {
+      color: var(--lime);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    /* FOOTER */
 
     footer {
-      padding: 20px;
-      background: rgba(0,0,0,0.3);
-      font-size: 0.9em;
+      border-top: 1px solid var(--line);
+      background: #050e1e;
+      padding: 27px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: .87rem;
     }
 
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 32px;
+    :focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: 3px;
+    }
+
+    /* TABLET LAYOUT */
+
+    @media (max-width: 900px) {
+      .game-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .nav {
+        gap: 11px;
+      }
+    }
+
+    /* MOBILE LAYOUT */
+
+    @media (max-width: 620px) {
+      .topbar-inner {
+        padding: 12px 15px;
+      }
+
+      .brand {
+        font-size: 1.03rem;
+      }
+
+      .nav a:not(.nav-cta) {
+        display: none;
+      }
+
+      .nav .nav-cta {
+        padding: 9px 11px;
+      }
+
+      .hero img {
+        max-height: 290px;
+      }
+
+      .intro {
+        padding: 25px 16px 8px;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main {
+        padding: 24px 16px 40px;
       }
 
       .game-grid {
-        padding: 20px;
-        gap: 20px;
+        grid-template-columns: 1fr;
+        gap: 17px;
+      }
+
+      .section-heading {
+        display: block;
+      }
+
+      .search {
+        width: 100%;
+        margin-top: 18px;
+      }
+
+      .about {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
       }
     }
   </style>
@@ -84,156 +461,658 @@
 
 <body>
 
-  <!-- Website Banner -->
-  <header>
-    <img src="assets/banner.png"
-         alt="KidCode Games Banner">
-  </header>
+  <!-- TOP NAVIGATION -->
 
-  <h1>KidCode Games</h1>
+  <div class="topbar">
+    <div class="topbar-inner">
 
-  <div class="game-grid">
-
-    <!-- GAME 1 — DIGESTIVE QUEST -->
-    <div class="game">
-      <a href="assets/games/digestive_quest.html">
-        <img src="assets/screenshots/digestivequest.png"
-             alt="Digestive Quest - Journey Through the Body">
+      <a href="#top" class="brand"
+         aria-label="KidCodeGames home">
+        KidCode<span>Games</span> 🎮
       </a>
-      <div class="platform-note">
-        Digestive Quest — Science Adventure!
-        <div>(Play on Mobile & Computer)</div>
-      </div>
-    </div>
 
-    <!-- GAME 2 — MINEBLOX -->
-    <div class="game">
-      <a href="assets/games/mineblox.html">
-        <img src="assets/screenshots/mineblox.png"
-             alt="MINEBLOX - 3D Voxel Sandbox">
-      </a>
-      <div class="platform-note">
-        MINEBLOX — Build, Explore & Survive!
-        <div>(Best on Computer)</div>
-      </div>
-    </div>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#games">All Games</a>
+        <a href="#about">About</a>
+        <a class="nav-cta" href="#games">▶ Play Games</a>
+      </nav>
 
-    <!-- GAME 3 — NITEFALL 3D -->
-    <div class="game">
-      <a href="assets/games/nitefall.html">
-        <img src="assets/screenshots/nitefall.png"
-             alt="NITEFALL 3D - Battle Royale">
-      </a>
-      <div class="platform-note">
-        NITEFALL 3D — Battle Royale!
-        <div>(Best on Computer)</div>
-      </div>
     </div>
-
-    <!-- GAME 4 — BOW & ARROW -->
-    <div class="game">
-      <a href="assets/games/halloweenbowarrow.html">
-        <img src="assets/screenshots/halloweenbowarrow.png"
-             alt="Bow & Arrow">
-      </a>
-      <div class="platform-note">
-        (Best on Mobile & Computer)
-      </div>
-    </div>
-
-    <!-- GAME 5 — SLAP SHOT DUEL -->
-    <div class="game">
-      <a href="assets/games/slapshotdual.html">
-        <img src="assets/screenshots/slapshotduel.png"
-             alt="Slap Shot Duel">
-      </a>
-      <div class="platform-note">
-        (Play on Mobile & Computer)
-      </div>
-    </div>
-
-    <!-- GAME 6 — AIRPLANE -->
-    <div class="game">
-      <a href="assets/games/airplane.html">
-        <img src="assets/screenshots/airplanered.png"
-             alt="Airplane">
-      </a>
-      <div class="platform-note">
-        (Best on Computer)
-      </div>
-    </div>
-
-    <!-- GAME 7 — LIGHT CYCLE CLASH -->
-    <div class="game">
-      <a href="assets/games/pixelracer.html">
-        <img src="assets/screenshots/lightcycleclash.png"
-             alt="Light Cycle Clash">
-      </a>
-      <div class="platform-note">
-        (Best on Computer)
-      </div>
-    </div>
-
-    <!-- GAME 8 — SHOOTER CHASE -->
-    <div class="game">
-      <a href="assets/games/shooterchase.html">
-        <img src="assets/screenshots/shooterchase.png"
-             alt="Shooter Chase">
-      </a>
-      <div class="platform-note">
-        (Best on Computer)
-      </div>
-    </div>
-
-    <!-- GAME 9 — RAP BATTLE -->
-    <div class="game">
-      <a href="assets/games/rapgame.html">
-        <img src="assets/screenshots/rapgame.png"
-             alt="Rap Battle">
-      </a>
-      <div class="platform-note">
-        (Best on Mobile & Computer)
-      </div>
-    </div>
-
-    <!-- GAME 10 — FROG JUMPER -->
-    <div class="game">
-      <a href="assets/games/frogjumper.html">
-        <img src="assets/screenshots/frogjumper.png"
-             alt="Frog Jumper">
-      </a>
-      <div class="platform-note">
-        (Best on Mobile & Computer)
-      </div>
-    </div>
-
-    <!-- GAME 11 — SNOWBOARD RUN -->
-    <div class="game">
-      <a href="assets/games/snowboardrun.html">
-        <img src="assets/screenshots/snowboardrun.png"
-             alt="Snowboard Run">
-      </a>
-      <div class="platform-note">
-        (Best on Computer)
-      </div>
-    </div>
-
-    <!-- GAME 12 — MATCHING MEMORY GAME -->
-    <div class="game">
-      <a href="assets/games/aethermatch.html">
-        <img src="assets/screenshots/aethermatch.png"
-             alt="Matching Memory Game">
-      </a>
-      <div class="platform-note">
-        (Best on Mobile & Computer)
-      </div>
-    </div>
-
   </div>
 
+
+  <!-- NEW KIDCODEGAMES BANNER -->
+  <!-- Upload your new image as assets/banner.png -->
+
+  <header class="hero" id="top">
+    <img
+      src="assets/banner.png"
+      alt="KidCodeGames — Play, Create, Share, colorful gaming characters and worlds"
+    >
+  </header>
+
+
+  <!-- WELCOME SECTION -->
+
+  <section class="intro" aria-label="Welcome">
+
+    <div>
+      <p class="eyebrow">Welcome to the arcade</p>
+
+      <h1>Awesome Games. Big Imagination.</h1>
+
+      <p class="lead">
+        Explore adventures, challenges, puzzles, and worlds
+        to build. Pick a game and let the fun begin!
+      </p>
+    </div>
+
+    <a href="#games" class="hero-button">
+      Explore All 12 Games →
+    </a>
+
+  </section>
+
+
+  <main>
+
+    <!-- GAME ARCADE -->
+
+    <section id="games" aria-labelledby="games-title">
+
+      <div class="section-heading">
+
+        <div>
+          <h2 id="games-title">🎮 Game Arcade</h2>
+          <p class="section-subtitle">
+            Choose your next adventure.
+          </p>
+        </div>
+
+        <input
+          id="gameSearch"
+          class="search"
+          type="search"
+          placeholder="🔎 Search games..."
+          aria-label="Search games by name"
+        >
+
+      </div>
+
+
+      <div class="game-grid" id="gameGrid">
+
+
+        <!-- GAME 1: DIGESTIVE QUEST -->
+
+        <article class="game-card" data-name="Digestive Quest">
+
+          <a class="image-wrap"
+             href="assets/games/digestive_quest.html"
+             aria-label="Play Digestive Quest">
+
+            <img
+              src="assets/screenshots/digestivequest.png"
+              alt="Digestive Quest thumbnail"
+              loading="eager"
+            >
+
+            <span class="number-badge">GAME 01</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Digestive Quest</h3>
+
+            <p class="card-description">
+              Take an exciting adventure through the
+              digestive system.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                📱 Mobile &amp; Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/digestive_quest.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 2: MINEBLOX -->
+
+        <article class="game-card" data-name="MINEBLOX">
+
+          <a class="image-wrap"
+             href="assets/games/mineblox.html"
+             aria-label="Play MINEBLOX">
+
+            <img
+              src="assets/screenshots/mineblox.png"
+              alt="MINEBLOX thumbnail"
+              loading="eager"
+            >
+
+            <span class="number-badge">GAME 02</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">MINEBLOX</h3>
+
+            <p class="card-description">
+              Explore a blocky world, mine materials,
+              and build your adventure.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                💻 Best on Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/mineblox.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 3: NITEFALL 3D -->
+
+        <article class="game-card" data-name="NITEFALL 3D">
+
+          <a class="image-wrap"
+             href="assets/games/nitefall.html"
+             aria-label="Play NITEFALL 3D">
+
+            <img
+              src="assets/screenshots/nitefall.png"
+              alt="NITEFALL 3D thumbnail"
+              loading="eager"
+            >
+
+            <span class="number-badge">GAME 03</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">NITEFALL 3D</h3>
+
+            <p class="card-description">
+              Drop into a 3D battle royale challenge.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                💻 Best on Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/nitefall.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 4: BOW & ARROW -->
+
+        <article class="game-card" data-name="Bow & Arrow">
+
+          <a class="image-wrap"
+             href="assets/games/halloweenbowarrow.html"
+             aria-label="Play Bow and Arrow">
+
+            <img
+              src="assets/screenshots/halloweenbowarrow.png"
+              alt="Bow and Arrow thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 04</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Bow &amp; Arrow</h3>
+
+            <p class="card-description">
+              Ready, aim, and test your precision.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                📱 Mobile &amp; Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/halloweenbowarrow.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 5: SLAP SHOT DUEL -->
+
+        <article class="game-card" data-name="Slap Shot Duel">
+
+          <a class="image-wrap"
+             href="assets/games/slapshotdual.html"
+             aria-label="Play Slap Shot Duel">
+
+            <img
+              src="assets/screenshots/slapshotduel.png"
+              alt="Slap Shot Duel thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 05</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Slap Shot Duel</h3>
+
+            <p class="card-description">
+              Take your shot and face off in the arena.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                📱 Mobile &amp; Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/slapshotdual.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 6: AIRPLANE -->
+
+        <article class="game-card" data-name="Airplane">
+
+          <a class="image-wrap"
+             href="assets/games/airplane.html"
+             aria-label="Play Airplane">
+
+            <img
+              src="assets/screenshots/airplanered.png"
+              alt="Airplane thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 06</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Airplane</h3>
+
+            <p class="card-description">
+              Take to the skies for high-flying fun.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                💻 Best on Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/airplane.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 7: LIGHT CYCLE CLASH -->
+
+        <article class="game-card" data-name="Light Cycle Clash">
+
+          <a class="image-wrap"
+             href="assets/games/pixelracer.html"
+             aria-label="Play Light Cycle Clash">
+
+            <img
+              src="assets/screenshots/lightcycleclash.png"
+              alt="Light Cycle Clash thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 07</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Light Cycle Clash</h3>
+
+            <p class="card-description">
+              Race through a neon-powered showdown.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                💻 Best on Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/pixelracer.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 8: SHOOTER CHASE -->
+
+        <article class="game-card" data-name="Shooter Chase">
+
+          <a class="image-wrap"
+             href="assets/games/shooterchase.html"
+             aria-label="Play Shooter Chase">
+
+            <img
+              src="assets/screenshots/shooterchase.png"
+              alt="Shooter Chase thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 08</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Shooter Chase</h3>
+
+            <p class="card-description">
+              Stay sharp in this action-packed chase.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                💻 Best on Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/shooterchase.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 9: RAP BATTLE -->
+
+        <article class="game-card" data-name="Rap Battle">
+
+          <a class="image-wrap"
+             href="assets/games/rapgame.html"
+             aria-label="Play Rap Battle">
+
+            <img
+              src="assets/screenshots/rapgame.png"
+              alt="Rap Battle thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 09</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Rap Battle</h3>
+
+            <p class="card-description">
+              Bring your rhythm and enjoy the battle.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                📱 Mobile &amp; Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/rapgame.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 10: FROG JUMPER -->
+
+        <article class="game-card" data-name="Frog Jumper">
+
+          <a class="image-wrap"
+             href="assets/games/frogjumper.html"
+             aria-label="Play Frog Jumper">
+
+            <img
+              src="assets/screenshots/frogjumper.png"
+              alt="Frog Jumper thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 10</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Frog Jumper</h3>
+
+            <p class="card-description">
+              Hop your way through a fun jumping
+              challenge.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                📱 Mobile &amp; Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/frogjumper.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 11: SNOWBOARD RUN -->
+
+        <article class="game-card" data-name="Snowboard Run">
+
+          <a class="image-wrap"
+             href="assets/games/snowboardrun.html"
+             aria-label="Play Snowboard Run">
+
+            <img
+              src="assets/screenshots/snowboardrun.png"
+              alt="Snowboard Run thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 11</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Snowboard Run</h3>
+
+            <p class="card-description">
+              Hit the slopes and enjoy a snowy ride.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                💻 Best on Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/snowboardrun.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 12: MATCHING MEMORY GAME -->
+
+        <article class="game-card" data-name="Matching Memory Game">
+
+          <a class="image-wrap"
+             href="assets/games/aethermatch.html"
+             aria-label="Play Matching Memory Game">
+
+            <img
+              src="assets/screenshots/aethermatch.png"
+              alt="Matching Memory Game thumbnail"
+              loading="lazy"
+            >
+
+            <span class="number-badge">GAME 12</span>
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Matching Memory Game</h3>
+
+            <p class="card-description">
+              Put your memory skills to the test.
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                📱 Mobile &amp; Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/aethermatch.html">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+      </div>
+
+      <p id="noResults" class="empty" role="status">
+        No games matched your search. Try another name!
+      </p>
+
+    </section>
+
+
+    <!-- ABOUT KIDCODEGAMES -->
+
+    <section class="about" id="about">
+
+      <div>
+        <h2>🚀 Play. Create. Share.</h2>
+
+        <p>
+          KidCodeGames is a place to have fun exploring
+          games and ideas. Our goal is to inspire the
+          next generation of game creators!
+        </p>
+      </div>
+
+      <div class="tag">
+        Made for curious minds ✨
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- FOOTER -->
+
   <footer>
-    © 2026 KidCode Games — Built with fun and creativity!
+    © 2026 KidCodeGames — Built with fun and creativity!
   </footer>
+
+
+  <!-- GAME SEARCH FUNCTIONALITY -->
+
+  <script>
+    const searchInput = document.getElementById('gameSearch');
+
+    const cards = [
+      ...document.querySelectorAll('.game-card')
+    ];
+
+    const noResults = document.getElementById('noResults');
+
+    searchInput.addEventListener('input', () => {
+
+      const query = searchInput.value.trim().toLowerCase();
+
+      let visible = 0;
+
+      cards.forEach(card => {
+
+        const match = card.dataset.name
+          .toLowerCase()
+          .includes(query);
+
+        card.hidden = !match;
+
+        if (match) {
+          visible++;
+        }
+
+      });
+
+      noResults.style.display =
+        visible ? 'none' : 'block';
+
+    });
+  </script>
 
 </body>
 </html>
