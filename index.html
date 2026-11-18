@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Let the Fun Begin — Choose a Game!</title>
+  <title>KidCode Games — Let the Fun Begin!</title>
 
   <style>
     body {
@@ -53,12 +53,13 @@
       border-radius: 12px;
       border: 2px solid white;
       cursor: pointer;
+      box-sizing: border-box;
     }
 
     .platform-note {
       color: #fff;
       font-size: 0.9em;
-      opacity: 0.8;
+      opacity: 0.9;
       margin-top: 10px;
     }
 
@@ -67,21 +68,69 @@
       background: rgba(0,0,0,0.3);
       font-size: 0.9em;
     }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 32px;
+      }
+
+      .game-grid {
+        padding: 20px;
+        gap: 20px;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-  <!-- Banner -->
+  <!-- Website Banner -->
   <header>
-    <img src="assets/banner.png" alt="KidCode Games Banner">
+    <img src="assets/banner.png"
+         alt="KidCode Games Banner">
   </header>
 
   <h1>KidCode Games</h1>
 
   <div class="game-grid">
 
-    <!-- Game 1 -->
+    <!-- GAME 1 — DIGESTIVE QUEST -->
+    <div class="game">
+      <a href="assets/games/digestive_quest.html">
+        <img src="assets/screenshots/digestivequest.png"
+             alt="Digestive Quest - Journey Through the Body">
+      </a>
+      <div class="platform-note">
+        Digestive Quest — Science Adventure!
+        <div>(Play on Mobile & Computer)</div>
+      </div>
+    </div>
+
+    <!-- GAME 2 — MINEBLOX -->
+    <div class="game">
+      <a href="assets/games/mineblox.html">
+        <img src="assets/screenshots/mineblox.png"
+             alt="MINEBLOX - 3D Voxel Sandbox">
+      </a>
+      <div class="platform-note">
+        MINEBLOX — Build, Explore & Survive!
+        <div>(Best on Computer)</div>
+      </div>
+    </div>
+
+    <!-- GAME 3 — NITEFALL 3D -->
+    <div class="game">
+      <a href="assets/games/nitefall.html">
+        <img src="assets/screenshots/nitefall.png"
+             alt="NITEFALL 3D - Battle Royale">
+      </a>
+      <div class="platform-note">
+        NITEFALL 3D — Battle Royale!
+        <div>(Best on Computer)</div>
+      </div>
+    </div>
+
+    <!-- GAME 4 — BOW & ARROW -->
     <div class="game">
       <a href="assets/games/halloweenbowarrow.html">
         <img src="assets/screenshots/halloweenbowarrow.png"
@@ -92,7 +141,7 @@
       </div>
     </div>
 
-    <!-- Game 2 -->
+    <!-- GAME 5 — SLAP SHOT DUEL -->
     <div class="game">
       <a href="assets/games/slapshotdual.html">
         <img src="assets/screenshots/slapshotduel.png"
@@ -103,7 +152,7 @@
       </div>
     </div>
 
-    <!-- Game 3 -->
+    <!-- GAME 6 — AIRPLANE -->
     <div class="game">
       <a href="assets/games/airplane.html">
         <img src="assets/screenshots/airplanered.png"
@@ -114,7 +163,7 @@
       </div>
     </div>
 
-    <!-- Game 4 -->
+    <!-- GAME 7 — LIGHT CYCLE CLASH -->
     <div class="game">
       <a href="assets/games/pixelracer.html">
         <img src="assets/screenshots/lightcycleclash.png"
@@ -125,7 +174,7 @@
       </div>
     </div>
 
-    <!-- Game 5 -->
+    <!-- GAME 8 — SHOOTER CHASE -->
     <div class="game">
       <a href="assets/games/shooterchase.html">
         <img src="assets/screenshots/shooterchase.png"
@@ -136,7 +185,7 @@
       </div>
     </div>
 
-    <!-- Game 6 -->
+    <!-- GAME 9 — RAP BATTLE -->
     <div class="game">
       <a href="assets/games/rapgame.html">
         <img src="assets/screenshots/rapgame.png"
@@ -147,7 +196,7 @@
       </div>
     </div>
 
-    <!-- Game 7 -->
+    <!-- GAME 10 — FROG JUMPER -->
     <div class="game">
       <a href="assets/games/frogjumper.html">
         <img src="assets/screenshots/frogjumper.png"
@@ -158,7 +207,7 @@
       </div>
     </div>
 
-    <!-- Game 8 -->
+    <!-- GAME 11 — SNOWBOARD RUN -->
     <div class="game">
       <a href="assets/games/snowboardrun.html">
         <img src="assets/screenshots/snowboardrun.png"
@@ -169,7 +218,7 @@
       </div>
     </div>
 
-    <!-- Game 9 -->
+    <!-- GAME 12 — MATCHING MEMORY GAME -->
     <div class="game">
       <a href="assets/games/aethermatch.html">
         <img src="assets/screenshots/aethermatch.png"
@@ -177,18 +226,6 @@
       </a>
       <div class="platform-note">
         (Best on Mobile & Computer)
-      </div>
-    </div>
-
-    <!-- Game 10 — Digestive Quest -->
-    <div class="game">
-      <a href="assets/games/digestive_quest.html">
-        <img src="assets/screenshots/digestivequest.png"
-             alt="Digestive Quest - Journey Through the Body">
-      </a>
-      <div class="platform-note">
-        Digestive Quest — Science Adventure!
-        <div>(Play on Mobile & Computer)</div>
       </div>
     </div>
 
