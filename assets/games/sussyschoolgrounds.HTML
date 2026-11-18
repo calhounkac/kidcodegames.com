@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sussy Schoolgrounds: 13 Bananas</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        #ui { position: absolute; top: 15px; left: 20px; color: #ffeb3b; pointer-events: none; z-index: 10; text-shadow: 2px 2px #000; display: none; }
+        #msg { 
+            position: absolute; top: 75%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-size: 30px; display: none; 
+            font-weight: bold; text-align: center; z-index: 200;
+        }
+        #danger-vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 5;
+            background: radial-gradient(circle, transparent 30%, rgba(255, 0, 0, 0) 100%);
+        }
+        
+        #start-screen {
+            position: absolute; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a0000 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100; color: white; text-align: center;
+        }
+        #start-button {
+            padding: 15px 40px; font-size: 24px; font-family: 'Courier New';
+            background: #800000; color: white; border: 2px solid #ff0000;
+            cursor: pointer; margin-top: 20px; transition: 0.3s;
+        }
+        #start-button:hover { background: #ff0000; box-shadow: 0 0 20px #ff0000; }
+        .flicker { animation: flicker 2s infinite; }
+        @keyframes flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.3; }
+        }
+
+        #jumpscare {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; z-index: 150; justify-content: center; align-items: center;
+            background: #000;
+        }
+        .scare-active { animation: shake 0.05s infinite; background: #300 !important; }
+        @keyframes shake {
+            0% { transform: translate(15px, 15px); }
+            50% { transform: translate(-15px, -15px); }
+            100% { transform: translate(15px, -15px); }
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <h1 class="flicker" style="font-size: 60px; color: #ff0000; margin-bottom: 0;">SUSSY SCHOOLGROUNDS</h1>
+        <p style="color: #888;">THE LUCKY 13</p>
+        <div style="max-width: 500px; margin: 20px; border-top: 1px solid #444; padding-top: 20px;">
+            <p>Collect <b>13 Bananas</b> to escape.</p>
+            <p>Sensitivity reduced by 3% for precision.</p>
+        </div>
+        <button id="start-button">ENTER THE LIBRARY</button>
+    </div>
+
+    <div id="jumpscare"><canvas id="scare-canvas"></canvas></div>
+    <div id="danger-vignette"></div>
+    <div id="ui">
+        <p>BANANAS: <span id="count" style="font-size: 24px;">0</span> / 13</p>
+    </div>
+    <div id="msg"></div>
+    <canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const sCanvas = document.getElementById("scare-canvas");
+const sCtx = sCanvas.getContext("2d");
+const jumpscareDiv = document.getElementById("jumpscare");
+const startScreen = document.getElementById("start-screen");
+const startBtn = document.getElementById("start-button");
+const ui = document.getElementById("ui");
+const countEl = document.getElementById("count");
+const msg = document.getElementById("msg");
+const vignette = document.getElementById("danger-vignette");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+sCanvas.width = 800; sCanvas.height = 800;
+
+let bananas, gameOver, gameWin, items, gameRunning = false;
+const cellSize = 120;
+const targetBananas = 13; // Lowered to 13
+
+const grid = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+    [1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1],
+    [1,1,1,1,1,1,0,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1],
+    [1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+    [1,0,1,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1],
+    [1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1],
+    [1,0,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,0,1,0,1],
+    [1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,1],
+    [1,1,1,0,1,0,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,0,1],
+    [1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+    [1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+    [1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1],
+    [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1],
+    [1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+const player = { x: 180, y: 180, speed: 5.2, angle: 0, targetAngle: 0 };
+const monsters = [
+    { x: 2600, y: 2000, speed: 3.4, color: "#800080", label: "SUSSY", stuckTimer: 0 },
+    { x: 1200, y: 1800, speed: 4.1, color: "#ff0000", label: "MUNKUS", stuckTimer: 0 }
+];
+const keys = {};
+
+function initGame() {
+    bananas = 0; gameOver = false; gameWin = false;
+    player.x = 180; player.y = 180;
+    monsters[0].x = 2600; monsters[0].y = 2000;
+    monsters[1].x = 1200; monsters[1].y = 1800;
+    countEl.innerText = "0";
+    msg.style.display = "none";
+    jumpscareDiv.style.display = "none";
+    items = [];
+    while(items.length < targetBananas) {
+        let rx = Math.floor(Math.random() * 25), ry = Math.floor(Math.random() * 20);
+        if(grid[ry][rx] === 0 && (rx > 3 || ry > 3)) {
+            items.push({ x: rx * cellSize + 60, y: ry * cellSize + 60, collected: false });
+        }
+    }
+}
+
+function triggerJumpscare(m) {
+    gameOver = true;
+    jumpscareDiv.style.display = "flex";
+    jumpscareDiv.classList.add("scare-active");
+    sCtx.clearRect(0,0,800,800);
+    sCtx.save();
+    sCtx.translate(400, 400);
+    sCtx.scale(3.5, 3.5);
+    sCtx.fillStyle = m.color;
+    sCtx.fillRect(-50, -50, 100, 110); 
+    sCtx.fillRect(-45, 60, 30, 80);    
+    sCtx.fillRect(15, 60, 30, 80);
+    sCtx.fillRect(-110, -30, 60, 30);  
+    sCtx.fillRect(50, -30, 60, 30);
+    sCtx.fillStyle = "white";
+    sCtx.beginPath(); sCtx.arc(-25, -20, 18, 0, 7); sCtx.fill();
+    sCtx.beginPath(); sCtx.arc(25, -20, 18, 0, 7); sCtx.fill();
+    sCtx.restore();
+    msg.innerHTML = `${m.label} GOT YOU!<br><span style='font-size:18px;color:white'>[R] TO TRY AGAIN</span>`;
+    msg.style.color = "red"; msg.style.display = "block";
+}
+
+startBtn.onclick = () => { startScreen.style.display = "none"; ui.style.display = "block"; gameRunning = true; initGame(); };
+window.onkeydown = e => { keys[e.code] = true; if(e.code === 'KeyR' && gameOver) initGame(); };
+window.onkeyup = e => keys[e.code] = false;
+
+// Lowered Sensitivity by 3% (from 0.1 to 0.097)
+window.onmousemove = e => { 
+    player.targetAngle = Math.atan2(e.clientY - canvas.height/2, e.clientX - canvas.width/2); 
+};
+
+function isWall(x, y) { 
+    let gx = Math.floor(x/cellSize), gy = Math.floor(y/cellSize); 
+    return !grid[gy] || grid[gy][gx] === 1; 
+}
+
+function update() {
+    if (!gameRunning || gameOver || gameWin) return;
+    let angleDiff = player.targetAngle - player.angle;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    
+    // Sensitivity reduction applied here (0.1 -> 0.097)
+    player.angle += angleDiff * 0.097;
+
+    let dx = 0, dy = 0;
+    if (keys['KeyW']) dy -= player.speed; if (keys['KeyS']) dy += player.speed;
+    if (keys['KeyA']) dx -= player.speed; if (keys['KeyD']) dx += player.speed;
+    if (!isWall(player.x + dx, player.y)) player.x += dx;
+    if (!isWall(player.x, player.y + dy)) player.y += dy;
+
+    let minDist = 2000;
+    monsters.forEach(m => {
+        let a = Math.atan2(player.y - m.y, player.x - m.x);
+        let vx = Math.cos(a) * m.speed, vy = Math.sin(a) * m.speed;
+        
+        if (isWall(m.x + vx, m.y + vy)) {
+            m.stuckTimer++;
+        } else {
+            m.stuckTimer = 0;
+        }
+
+        if (m.stuckTimer < 90) { 
+            if (!isWall(m.x + vx, m.y)) m.x += vx;
+            if (!isWall(m.x, m.y + vy)) m.y += vy;
+        } else {
+            m.x += vx * 0.4; 
+            m.y += vy * 0.4;
+            if (m.stuckTimer > 150) m.stuckTimer = 0; 
+        }
+
+        let d = Math.hypot(player.x - m.x, player.y - m.y);
+        if (d < minDist) minDist = d;
+        if (d < 50) triggerJumpscare(m);
+    });
+
+    if (minDist < 500) {
+        let intensity = 1 - (minDist / 500);
+        vignette.style.background = `radial-gradient(circle, transparent 30%, rgba(255, 0, 0, ${intensity}) 100%)`;
+    } else vignette.style.background = "transparent";
+
+    items.forEach(it => {
+        if (!it.collected && Math.hypot(player.x - it.x, player.y - it.y) < 40) {
+            it.collected = true; bananas++; countEl.innerText = bananas;
+            if (bananas >= targetBananas) { gameWin = true; msg.innerHTML = "YOU ESCAPED!<br>[R] TO REPLAY"; msg.style.display = "block"; }
+        }
+    });
+}
+
+function drawBookshelf(x, y) {
+    ctx.fillStyle = "#3d2b1f"; ctx.fillRect(x, y, cellSize, cellSize);
+    ctx.fillStyle = "#261a12"; for(let i=0; i<4; i++) ctx.fillRect(x+5, y + (i*30) + 5, cellSize-10, 5);
+    const colors = ["#7a1a1a", "#1a4a7a", "#1a7a2a", "#a18a1a"];
+    for(let i=0; i<4; i++) for(let j=0; j<8; j++) { ctx.fillStyle = colors[(i+j)%4]; ctx.fillRect(x + 10 + (j*12), y + (i*30) + 10, 8, 20); }
+}
+
+function drawPlayer() {
+    ctx.save(); ctx.translate(canvas.width/2, canvas.height/2); ctx.rotate(player.angle);
+    ctx.fillStyle = "#3498db"; ctx.fillRect(-15, -15, 30, 30); 
+    ctx.fillStyle = "white"; ctx.fillRect(5, -10, 8, 8); ctx.fillRect(5, 2, 8, 8); 
+    ctx.restore();
+}
+
+function drawMonster(m) {
+    let t = Date.now() * 0.01;
+    let walk = Math.sin(t * 1.5) * 15;
+    let swing = Math.cos(t * 1.5) * 15;
+    ctx.save();
+    ctx.translate(m.x, m.y);
+    if (m.stuckTimer >= 90) ctx.globalAlpha = 0.5;
+    ctx.fillStyle = m.color;
+    ctx.fillRect(-20, -20, 40, 45); 
+    ctx.fillRect(-15, 25, 10, 20 + walk); 
+    ctx.fillRect(5, 25, 10, 20 - walk);
+    ctx.fillRect(-35, -10, 15, 10 + swing); 
+    ctx.fillRect(20, -10, 15, 10 - swing);
+    ctx.fillStyle = "white";
+    ctx.beginPath(); ctx.arc(-10, -5, 6, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(10, -5, 6, 0, 7); ctx.fill();
+    ctx.restore();
+}
+
+function draw() {
+    if (!gameRunning || gameOver) return;
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.save(); ctx.translate(canvas.width/2 - player.x, canvas.height/2 - player.y);
+    
+    ctx.beginPath(); ctx.moveTo(player.x, player.y);
+    for(let a = player.angle - 0.9; a < player.angle + 0.9; a += 0.01) {
+        let d = 0; while(d < 1200) { d += 15; if(isWall(player.x + Math.cos(a)*d, player.y + Math.sin(a)*d)) break; }
+        ctx.lineTo(player.x + Math.cos(a)*d, player.y + Math.sin(a)*d);
+    }
+    ctx.lineTo(player.x, player.y); ctx.clip();
+
+    ctx.fillStyle = "#222"; ctx.fillRect(0,0,3000,2400);
+    grid.forEach((r, y) => r.forEach((v, x) => { if(v) drawBookshelf(x*cellSize, y*cellSize); }));
+    items.forEach(it => { if(!it.collected) { ctx.fillStyle = "#ffeb3b"; ctx.beginPath(); ctx.arc(it.x, it.y, 18, 0, 7); ctx.fill(); }});
+    monsters.forEach(m => drawMonster(m));
+    ctx.restore();
+
+    let g = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 20, canvas.width/2, canvas.height/2, 1000);
+    g.addColorStop(0, "rgba(255, 255, 255, 0.45)"); 
+    g.addColorStop(1, "transparent");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(canvas.width/2, canvas.height/2);
+    ctx.arc(canvas.width/2, canvas.height/2, 1200, player.angle-0.9, player.angle+0.9); ctx.fill();
+
+    drawPlayer();
+}
+
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>
