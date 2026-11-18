@@ -5,14 +5,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#081327">
-  <meta name="description" content="KidCodeGames — Play, Create, Share. Explore a growing collection of fun games.">
+  <meta name="description" content="KidCodeGames — Play, Create, Share. Explore fun games and adventures.">
+
   <title>KidCodeGames | Play • Create • Share</title>
 
   <style>
     :root {
       --bg: #071225;
       --panel: #11213b;
-      --panel2: #0c1b33;
       --line: #263b58;
       --text: #f5f9ff;
       --muted: #b6c6de;
@@ -31,7 +31,7 @@
 
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
       background: radial-gradient(
         ellipse at 50% 0,
         #183561 0,
@@ -94,8 +94,7 @@
       font-size: .94rem;
     }
 
-    .nav a:hover,
-    .nav a:focus-visible {
+    .nav a:hover {
       color: var(--cyan);
     }
 
@@ -121,7 +120,7 @@
       display: block;
     }
 
-    /* INTRO SECTION */
+    /* INTRO */
 
     .intro {
       max-width: 1240px;
@@ -199,7 +198,7 @@
       margin: 0;
     }
 
-    /* GAME SEARCH */
+    /* SEARCH */
 
     .search {
       background: #142742;
@@ -248,6 +247,10 @@
       box-shadow: 0 12px 32px rgba(0,0,0,.35);
     }
 
+    .game-card[hidden] {
+      display: none;
+    }
+
     /* GAME IMAGES */
 
     .image-wrap {
@@ -268,6 +271,12 @@
 
     .game-card:hover .image-wrap img {
       transform: scale(1.04);
+    }
+
+    /* NO GAME NUMBER OVERLAYS */
+
+    .number-badge {
+      display: none !important;
     }
 
     /* GAME CARD CONTENT */
@@ -371,7 +380,7 @@
       outline-offset: 3px;
     }
 
-    /* TABLET LAYOUT */
+    /* TABLET */
 
     @media (max-width: 900px) {
       .game-grid {
@@ -383,7 +392,7 @@
       }
     }
 
-    /* MOBILE LAYOUT */
+    /* MOBILE */
 
     @media (max-width: 620px) {
       .topbar-inner {
@@ -469,18 +478,17 @@
   </div>
 
 
-  <!-- NEW KIDCODEGAMES BANNER -->
-  <!-- Upload your new image as assets/banner.png -->
+  <!-- WEBSITE BANNER -->
 
   <header class="hero" id="top">
     <img
       src="assets/banner.png"
-      alt="KidCodeGames — Play, Create, Share, colorful gaming characters and worlds"
+      alt="KidCodeGames — Play, Create, Share"
     >
   </header>
 
 
-  <!-- WELCOME SECTION -->
+  <!-- WELCOME -->
 
   <section class="intro" aria-label="Welcome">
 
@@ -490,13 +498,14 @@
       <h1>Awesome Games. Big Imagination.</h1>
 
       <p class="lead">
-        Explore adventures, challenges, puzzles, and worlds
-        to build. Pick a game and let the fun begin!
+        Explore adventures, challenges, puzzles,
+        and worlds to build.
+        Pick a game and let the fun begin!
       </p>
     </div>
 
     <a href="#games" class="hero-button">
-      Explore All 12 Games →
+      Explore All 13 Games →
     </a>
 
   </section>
@@ -551,8 +560,8 @@
             <h3 class="card-title">Digestive Quest</h3>
 
             <p class="card-description">
-              Take an exciting adventure through the
-              digestive system.
+              Take an exciting adventure through
+              the digestive system.
             </p>
 
             <div class="card-bottom">
@@ -650,7 +659,47 @@
         </article>
 
 
-        <!-- GAME 4: BOW & ARROW -->
+        <!-- GAME 4: SUSSY SCHOOLGROUNDS -->
+
+        <article class="game-card" data-name="Sussy Schoolgrounds">
+
+          <a class="image-wrap"
+             href="assets/games/sussyschoolgrounds.HTML"
+             aria-label="Play Sussy Schoolgrounds">
+
+            <img
+              src="assets/screenshots/sussyschoolgrounds.png"
+              alt="Sussy Schoolgrounds thumbnail"
+              loading="lazy"
+            >
+          </a>
+
+          <div class="card-body">
+
+            <h3 class="card-title">Sussy Schoolgrounds</h3>
+
+            <p class="card-description">
+              Explore a spooky school library,
+              collect bananas, and escape the monsters!
+            </p>
+
+            <div class="card-bottom">
+
+              <span class="device">
+                💻 Best on Computer
+              </span>
+
+              <a class="play"
+                 href="assets/games/sussyschoolgrounds.HTML">
+                ▶ Play
+              </a>
+
+            </div>
+          </div>
+        </article>
+
+
+        <!-- GAME 5: BOW & ARROW -->
 
         <article class="game-card" data-name="Bow & Arrow">
 
@@ -689,7 +738,7 @@
         </article>
 
 
-        <!-- GAME 5: SLAP SHOT DUEL -->
+        <!-- GAME 6: SLAP SHOT DUEL -->
 
         <article class="game-card" data-name="Slap Shot Duel">
 
@@ -728,7 +777,7 @@
         </article>
 
 
-        <!-- GAME 6: AIRPLANE -->
+        <!-- GAME 7: AIRPLANE -->
 
         <article class="game-card" data-name="Airplane">
 
@@ -767,7 +816,7 @@
         </article>
 
 
-        <!-- GAME 7: LIGHT CYCLE CLASH -->
+        <!-- GAME 8: LIGHT CYCLE CLASH -->
 
         <article class="game-card" data-name="Light Cycle Clash">
 
@@ -806,7 +855,7 @@
         </article>
 
 
-        <!-- GAME 8: SHOOTER CHASE -->
+        <!-- GAME 9: SHOOTER CHASE -->
 
         <article class="game-card" data-name="Shooter Chase">
 
@@ -845,7 +894,7 @@
         </article>
 
 
-        <!-- GAME 9: RAP BATTLE -->
+        <!-- GAME 10: RAP BATTLE -->
 
         <article class="game-card" data-name="Rap Battle">
 
@@ -884,7 +933,7 @@
         </article>
 
 
-        <!-- GAME 10: FROG JUMPER -->
+        <!-- GAME 11: FROG JUMPER -->
 
         <article class="game-card" data-name="Frog Jumper">
 
@@ -904,8 +953,7 @@
             <h3 class="card-title">Frog Jumper</h3>
 
             <p class="card-description">
-              Hop your way through a fun jumping
-              challenge.
+              Hop your way through a fun jumping challenge.
             </p>
 
             <div class="card-bottom">
@@ -924,7 +972,7 @@
         </article>
 
 
-        <!-- GAME 11: SNOWBOARD RUN -->
+        <!-- GAME 12: SNOWBOARD RUN -->
 
         <article class="game-card" data-name="Snowboard Run">
 
@@ -963,7 +1011,7 @@
         </article>
 
 
-        <!-- GAME 12: MATCHING MEMORY GAME -->
+        <!-- GAME 13: MATCHING MEMORY GAME -->
 
         <article class="game-card" data-name="Matching Memory Game">
 
